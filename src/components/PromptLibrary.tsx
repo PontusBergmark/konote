@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Prompt, PromptType, CEPStatus } from '../types'
+import type { Prompt, PromptType } from '../types'
 
 interface PromptLibraryProps {
   prompts: Prompt[]
@@ -11,7 +11,6 @@ interface PromptLibraryProps {
 const TYPE_LABELS: Record<PromptType, { label: string; color: string; bg: string }> = {
   association_probe: { label: 'Probe', color: 'var(--badge-concept-text)', bg: 'var(--badge-concept-bg)' },
   competitor_anchored: { label: 'Anchored', color: 'var(--badge-competitor-text)', bg: 'var(--badge-competitor-bg)' },
-  entry_point: { label: 'Entry', color: 'var(--badge-category-text)', bg: 'var(--badge-category-bg)' },
 }
 
 export function PromptLibrary({ prompts, searchQuery, onAdd, onRemove }: PromptLibraryProps) {
@@ -20,7 +19,6 @@ export function PromptLibrary({ prompts, searchQuery, onAdd, onRemove }: PromptL
   const [collapsed, setCollapsed] = useState<Record<PromptType, boolean>>({
     association_probe: false,
     competitor_anchored: false,
-    entry_point: false,
   })
 
   const filtered = prompts.filter(p =>
@@ -30,7 +28,6 @@ export function PromptLibrary({ prompts, searchQuery, onAdd, onRemove }: PromptL
   const grouped: Record<PromptType, Prompt[]> = {
     association_probe: filtered.filter(p => p.type === 'association_probe'),
     competitor_anchored: filtered.filter(p => p.type === 'competitor_anchored'),
-    entry_point: filtered.filter(p => p.type === 'entry_point'),
   }
 
   const handleAdd = () => {
@@ -39,7 +36,6 @@ export function PromptLibrary({ prompts, searchQuery, onAdd, onRemove }: PromptL
       id: `p-${Date.now()}`,
       text: newText.trim(),
       type: newType,
-      cepStatus: 'unvalidated',
       tags: [],
       createdAt: new Date().toISOString().split('T')[0],
     })
@@ -50,7 +46,6 @@ export function PromptLibrary({ prompts, searchQuery, onAdd, onRemove }: PromptL
     <div className="p-6 max-w-4xl">
       <h2 className="text-sm font-medium text-foreground mb-4">Prompts</h2>
 
-      {/* Sections */}
       {(Object.keys(grouped) as PromptType[]).map(type => {
         const items = grouped[type]
         const meta = TYPE_LABELS[type]
@@ -76,15 +71,6 @@ export function PromptLibrary({ prompts, searchQuery, onAdd, onRemove }: PromptL
                     <span className="px-1.5 py-0.5 rounded text-[9px] font-medium" style={{ backgroundColor: meta.bg, color: meta.color }}>
                       {meta.label}
                     </span>
-                    {p.type === 'entry_point' && (
-                      p.cepStatus === 'confirmed_cep' ? (
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-primary text-primary-foreground">CEP</span>
-                      ) : p.cepStatus === 'rejected' ? (
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-destructive text-destructive-foreground">✕</span>
-                      ) : (
-                        <span className="w-2 h-2 rounded-full bg-muted-foreground" />
-                      )
-                    )}
                     <button
                       onClick={() => onRemove(p.id)}
                       className="text-muted-foreground hover:text-destructive text-xs"
@@ -99,7 +85,6 @@ export function PromptLibrary({ prompts, searchQuery, onAdd, onRemove }: PromptL
         )
       })}
 
-      {/* Add form */}
       <div className="mt-6 bg-card border border-border rounded-lg p-4 space-y-3">
         <textarea
           value={newText}

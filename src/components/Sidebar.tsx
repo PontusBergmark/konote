@@ -17,7 +17,6 @@ const NAV_SECTIONS: Array<{ label: string; items: Array<{ id: ViewId; name: stri
       { id: 'overview', name: 'Overview' },
       { id: 'association-map', name: 'Association map' },
       { id: 'attribute-scores', name: 'Attribute scores' },
-      { id: 'entry-points', name: 'Entry points' },
       { id: 'co-occurrence', name: 'Co-occurrence' },
     ],
   },
@@ -40,7 +39,6 @@ export function Sidebar({ currentView, onViewChange, searchQuery, onSearchChange
 
   return (
     <div className="w-[220px] min-w-[220px] h-screen bg-sidebar-bg border-r border-border flex flex-col">
-      {/* Logo */}
       <div className="px-4 py-4 flex items-center gap-2">
         <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
           <span className="text-primary-foreground text-xs font-medium">L</span>
@@ -48,7 +46,6 @@ export function Sidebar({ currentView, onViewChange, searchQuery, onSearchChange
         <span className="text-sm font-medium text-foreground">LLM Tracker</span>
       </div>
 
-      {/* Search */}
       <div className="px-3 pb-3">
         <input
           type="text"
@@ -59,7 +56,6 @@ export function Sidebar({ currentView, onViewChange, searchQuery, onSearchChange
         />
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-1">
         {NAV_SECTIONS.map(section => (
           <div key={section.label} className="mb-4">
@@ -86,7 +82,6 @@ export function Sidebar({ currentView, onViewChange, searchQuery, onSearchChange
         ))}
       </nav>
 
-      {/* Usage counter */}
       <div className="px-3 py-3 border-t border-border">
         <p className="text-[11px] text-muted-foreground leading-relaxed">
           {usage.scansUsed}/{plan.scansPerMonth} scans used this month
