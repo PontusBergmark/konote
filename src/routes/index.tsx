@@ -35,7 +35,16 @@ function Index() {
   const [isScanning, setIsScanning] = useState(false)
 
   if (app.showOnboarding) {
-    return <Onboarding onComplete={app.completeOnboarding} />
+    return (
+      <Onboarding
+        onComplete={(data) => {
+          const shouldScan = app.completeOnboarding(data)
+          if (shouldScan) {
+            handleRunScan()
+          }
+        }}
+      />
+    )
   }
 
   const handleRunScan = () => {
