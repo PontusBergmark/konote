@@ -8,6 +8,8 @@ interface OverviewProps {
   brands: Brand[]
   attributes: Attribute[]
   onNavigate: (view: ViewId) => void
+  onRunScan?: () => void
+  isScanning?: boolean
 }
 
 export function Overview({ brands, attributes, onNavigate }: OverviewProps) {

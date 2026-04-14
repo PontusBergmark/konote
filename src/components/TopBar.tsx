@@ -6,9 +6,11 @@ interface TopBarProps {
   selectedBrand: Brand
   onBrandChange: (id: string) => void
   onExport: () => void
+  onRunScan: () => void
+  isScanning?: boolean
 }
 
-export function TopBar({ brands, selectedBrand, onBrandChange, onExport }: TopBarProps) {
+export function TopBar({ brands, selectedBrand, onBrandChange, onExport, onRunScan, isScanning }: TopBarProps) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -48,12 +50,22 @@ export function TopBar({ brands, selectedBrand, onBrandChange, onExport }: TopBa
         </div>
       </div>
 
-      <button
-        onClick={onExport}
-        className="px-3 py-1 text-xs border border-border rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-      >
-        Export
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={onRunScan}
+          disabled={isScanning}
+          className="px-3 py-1 text-xs font-medium rounded-md text-white hover:opacity-90 disabled:opacity-50 transition-opacity"
+          style={{ backgroundColor: '#6C3EF4' }}
+        >
+          {isScanning ? 'Scanning…' : 'Run scan ↗'}
+        </button>
+        <button
+          onClick={onExport}
+          className="px-3 py-1 text-xs border border-border rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+        >
+          Export
+        </button>
+      </div>
     </div>
   )
 }
