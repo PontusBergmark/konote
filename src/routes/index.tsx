@@ -10,6 +10,7 @@ import { PositioningProbe } from '../components/PositioningProbe'
 import { PromptLibrary } from '../components/PromptLibrary'
 import { AttributesManager } from '../components/AttributesManager'
 import { Settings } from '../components/Settings'
+import { Onboarding } from '../components/Onboarding'
 import { useAppState } from '../hooks/useAppState'
 import { useUsage } from '../hooks/useUsage'
 import { useTheme } from '../hooks/useTheme'
@@ -30,6 +31,10 @@ function Index() {
   const { usage, plan } = useUsage()
   const { isDark, toggle: toggleTheme } = useTheme()
   const { exportView } = useExport()
+
+  if (app.showOnboarding) {
+    return <Onboarding onComplete={app.completeOnboarding} />
+  }
 
   const handleAddAttributeFromProbe = (name: string) => {
     app.addAttribute({
@@ -124,6 +129,7 @@ function Index() {
               enabledModels={app.enabledModels}
               onToggleModel={app.toggleModel}
               currentTier={usage.currentTier}
+              onResetOnboarding={app.resetToOnboarding}
             />
           )}
         </div>
