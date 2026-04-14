@@ -15,7 +15,7 @@ interface SettingsProps {
 
 const SWATCHES = ['#FF5C35', '#00A1E0', '#1A1A2E', '#E42527', '#1A3C5E', '#6C3EF4', '#10B981', '#F59E0B']
 
-export function Settings({ brands, onAddBrand, onRemoveBrand, enabledModels, onToggleModel, currentTier }: SettingsProps) {
+export function Settings({ brands, onAddBrand, onRemoveBrand, enabledModels, onToggleModel, currentTier, onResetOnboarding }: SettingsProps) {
   const [newName, setNewName] = useState('')
   const [newColor, setNewColor] = useState(SWATCHES[0])
   const plan = PLANS[currentTier]
@@ -99,6 +99,18 @@ export function Settings({ brands, onAddBrand, onRemoveBrand, enabledModels, onT
           ))}
         </div>
       </div>
+
+      {onResetOnboarding && (
+        <div className="mt-6 pt-4 border-t border-border">
+          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Debug</h3>
+          <button
+            onClick={onResetOnboarding}
+            className="px-3 py-1.5 text-xs bg-destructive text-destructive-foreground rounded-md hover:opacity-90"
+          >
+            Reset to onboarding
+          </button>
+        </div>
+      )}
     </div>
   )
 }
