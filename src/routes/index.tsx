@@ -32,9 +32,18 @@ function Index() {
   const { usage, plan } = useUsage()
   const { isDark, toggle: toggleTheme } = useTheme()
   const { exportView } = useExport()
+  const [isScanning, setIsScanning] = useState(false)
 
   if (app.showOnboarding) {
     return <Onboarding onComplete={app.completeOnboarding} />
+  }
+
+  const handleRunScan = () => {
+    setIsScanning(true)
+    const prompt = `Run a full association scan for ${app.selectedBrand.name} across all tracked prompts and attributes. Return structured results for each attribute showing explicit mention frequency.`
+    console.log('[mock scan] sendPrompt:', prompt)
+    // Simulate scan delay
+    setTimeout(() => setIsScanning(false), 2500)
   }
 
   const handleAddAttributeFromProbe = (name: string) => {
