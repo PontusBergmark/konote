@@ -79,6 +79,8 @@ function Index() {
           selectedBrand={app.selectedBrand}
           onBrandChange={app.setSelectedBrandId}
           onExport={handleExport}
+          onRunScan={handleRunScan}
+          isScanning={isScanning}
         />
         <SummaryBar
           selectedBrand={app.selectedBrand}
@@ -91,6 +93,8 @@ function Index() {
               brands={app.brands}
               attributes={app.attributes}
               onNavigate={app.setCurrentView}
+              onRunScan={handleRunScan}
+              isScanning={isScanning}
             />
           )}
           {app.currentView === 'association-map' && (
