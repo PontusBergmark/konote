@@ -19,11 +19,12 @@ export function useAppState() {
   const selectedBrand = brands.find(b => b.id === selectedBrandId) ?? brands[0]
   const showOnboarding = !onboardingDone && promptsList.length === 0
 
-  const completeOnboarding = useCallback((data: { ownBrand: Brand; competitors: Brand[]; prompts: Prompt[] }) => {
+  const completeOnboarding = useCallback((data: { ownBrand: Brand; competitors: Brand[]; prompts: Prompt[]; runScan?: boolean }) => {
     setBrands([data.ownBrand, ...data.competitors])
     setSelectedBrandId(data.ownBrand.id)
     setPromptsList(data.prompts)
     setOnboardingDone(true)
+    return data.runScan ?? false
   }, [])
 
   const resetToOnboarding = useCallback(() => {
