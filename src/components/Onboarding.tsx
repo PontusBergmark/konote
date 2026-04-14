@@ -2,14 +2,14 @@ import { useState } from 'react'
 import type { Brand, Prompt } from '../types'
 
 interface OnboardingProps {
-  onComplete: (data: { ownBrand: Brand; competitors: Brand[]; prompts: Prompt[] }) => void
+  onComplete: (data: { ownBrand: Brand; competitors: Brand[]; prompts: Prompt[]; runScan: boolean }) => void
 }
 
 const SWATCHES = ['#FF5C35', '#00A1E0', '#1A1A2E', '#E42527', '#1A3C5E', '#6C3EF4', '#10B981', '#F59E0B']
 
-const TEMPLATE_PROBES: { text: string; type: 'association_probe' | 'competitor_anchored' }[] = [
-  { text: "describe {brand}'s strengths and what it's known for", type: 'association_probe' },
-  { text: 'compare {brand} to its main competitors — what sets it apart', type: 'competitor_anchored' },
+const TEMPLATE_PROBES: { label: string; text: string; type: 'association_probe' | 'competitor_anchored' }[] = [
+  { label: 'Association probe', text: "describe {brand}'s strengths and what it's known for", type: 'association_probe' },
+  { label: 'Competitor-anchored', text: 'compare {brand} to its main competitors — what sets it apart', type: 'competitor_anchored' },
 ]
 
 export function Onboarding({ onComplete }: OnboardingProps) {
@@ -25,8 +25,12 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const [compColor, setCompColor] = useState(SWATCHES[1])
 
   // Step 3
-  const [addedPrompts, setAddedPrompts] = useState<string[]>([])
+  const [addedPrompts, setAddedPrompts] = useState<{ text: string; type: 'association_probe' | 'competitor_anchored' }[]>([])
   const [customPrompt, setCustomPrompt] = useState('')
+  const [customType, setCustomType] = useState<'association_probe' | 'competitor_anchored'>('association_probe')
+
+  // Final screen
+  const [selectedModel, setSelectedModel] = useState('All')
 
   const resolvedTemplates = TEMPLATE_PROBES.map(t => ({
     ...t,
@@ -42,19 +46,21 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     setCompColor(next)
   }
 
-  const handleToggleTemplate = (text: string) => {
-    setAddedPrompts(prev =>
-      prev.includes(text) ? prev.filter(p => p !== text) : [...prev, text],
-    )
+  const handleToggleTemplate = (template: typeof resolvedTemplates[0]) => {
+    setAddedPrompts(prev => {
+      const exists = prev.some(p => p.text === template.text)
+      if (exists) return prev.filter(p => p.text !== template.text)
+      return [...prev, { text: template.text, type: template.type }]
+    })
   }
 
   const handleAddCustom = () => {
     if (!customPrompt.trim()) return
-    setAddedPrompts(prev => [...prev, customPrompt.trim()])
+    setAddedPrompts(prev => [...prev, { text: customPrompt.trim(), type: customType }])
     setCustomPrompt('')
   }
 
-  const handleFinish = () => {
+  const buildData = (runScan: boolean) => {
     const ownBrand: Brand = {
       id: brandName.trim().toLowerCase().replace(/\s+/g, '-'),
       name: brandName.trim(),
@@ -68,17 +74,14 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       isOwn: false,
     }))
     const now = new Date().toISOString().slice(0, 10)
-    const prompts: Prompt[] = addedPrompts.map((text, i) => {
-      const isCompAnchored = text.toLowerCase().includes('compar') || text.toLowerCase().includes('competitor')
-      return {
-        id: `onb-${i}`,
-        text,
-        type: isCompAnchored ? 'competitor_anchored' : 'association_probe',
-        tags: [ownBrand.id],
-        createdAt: now,
-      }
-    })
-    onComplete({ ownBrand, competitors: compBrands, prompts })
+    const prompts: Prompt[] = addedPrompts.map((p, i) => ({
+      id: `onb-${i}`,
+      text: p.text,
+      type: p.type,
+      tags: [ownBrand.id],
+      createdAt: now,
+    }))
+    onComplete({ ownBrand, competitors: compBrands, prompts, runScan })
   }
 
   const stepLabels = ['Your brand', 'Your competitors', 'Your first prompts']
@@ -217,19 +220,21 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           </div>
         )}
 
-        {/* Step 3 */}
+        {/* Step 3 — Prompts */}
         {step === 2 && (
           <div className="space-y-4">
             <p className="text-xs text-muted-foreground leading-relaxed">
               These are the questions we ask ChatGPT, Claude and Gemini about your brand — the answers become your association data.
             </p>
+
+            {/* Template prompts — each is a separate one-click add */}
             <div className="space-y-1.5">
               {resolvedTemplates.map(t => {
-                const active = addedPrompts.includes(t.text)
+                const active = addedPrompts.some(p => p.text === t.text)
                 return (
                   <button
-                    key={t.text}
-                    onClick={() => handleToggleTemplate(t.text)}
+                    key={t.type}
+                    onClick={() => handleToggleTemplate(t)}
                     className={`w-full text-left px-3 py-2.5 text-xs rounded-md border transition-colors ${
                       active
                         ? 'bg-primary/10 border-primary text-foreground'
@@ -237,38 +242,60 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     }`}
                   >
                     <span className="text-[9px] uppercase font-medium tracking-wide text-primary mr-1.5">
-                      {t.type === 'association_probe' ? 'probe' : 'anchored'}
+                      {t.label}
                     </span>
-                    {t.text}
+                    <span className="text-muted-foreground">{t.text}</span>
                   </button>
                 )
               })}
             </div>
-            <div className="flex gap-2">
-              <input
-                value={customPrompt}
-                onChange={e => setCustomPrompt(e.target.value)}
-                placeholder="Write your own prompt…"
-                onKeyDown={e => e.key === 'Enter' && handleAddCustom()}
-                className="flex-1 px-3 py-2 text-sm bg-background border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-              />
-              <button
-                onClick={handleAddCustom}
-                disabled={!customPrompt.trim()}
-                className="px-3 py-2 text-sm bg-secondary text-secondary-foreground rounded-md hover:opacity-90 disabled:opacity-40"
-              >
-                Add
-              </button>
+
+            {/* Custom prompt with type selector */}
+            <div className="space-y-1.5">
+              <div className="flex gap-1">
+                {(['association_probe', 'competitor_anchored'] as const).map(t => (
+                  <button
+                    key={t}
+                    onClick={() => setCustomType(t)}
+                    className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                      customType === t ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'
+                    }`}
+                  >
+                    {t === 'association_probe' ? 'Probe' : 'Anchored'}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  value={customPrompt}
+                  onChange={e => setCustomPrompt(e.target.value)}
+                  placeholder="Write your own prompt…"
+                  onKeyDown={e => e.key === 'Enter' && handleAddCustom()}
+                  className="flex-1 px-3 py-2 text-sm bg-background border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+                <button
+                  onClick={handleAddCustom}
+                  disabled={!customPrompt.trim()}
+                  className="px-3 py-2 text-sm bg-secondary text-secondary-foreground rounded-md hover:opacity-90 disabled:opacity-40"
+                >
+                  Add
+                </button>
+              </div>
             </div>
-            {addedPrompts.filter(p => !resolvedTemplates.some(t => t.text === p)).length > 0 && (
+
+            {/* Custom prompts list */}
+            {addedPrompts.filter(p => !resolvedTemplates.some(t => t.text === p.text)).length > 0 && (
               <div className="space-y-1">
                 {addedPrompts
-                  .filter(p => !resolvedTemplates.some(t => t.text === p))
+                  .filter(p => !resolvedTemplates.some(t => t.text === p.text))
                   .map(p => (
-                    <div key={p} className="flex items-center gap-2 bg-card border border-border rounded-md px-3 py-2">
-                      <span className="text-xs text-foreground flex-1 truncate">{p}</span>
+                    <div key={p.text} className="flex items-center gap-2 bg-card border border-border rounded-md px-3 py-2">
+                      <span className="text-[9px] uppercase font-medium tracking-wide text-primary">
+                        {p.type === 'association_probe' ? 'probe' : 'anchored'}
+                      </span>
+                      <span className="text-xs text-foreground flex-1 truncate">{p.text}</span>
                       <button
-                        onClick={() => setAddedPrompts(prev => prev.filter(x => x !== p))}
+                        onClick={() => setAddedPrompts(prev => prev.filter(x => x.text !== p.text))}
                         className="text-muted-foreground hover:text-destructive text-xs"
                       >
                         ×
@@ -277,6 +304,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   ))}
               </div>
             )}
+
             <button
               disabled={addedPrompts.length < 2}
               onClick={() => setStep(3)}
@@ -299,12 +327,40 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 <span className="font-medium text-foreground">{brandName}</span>.
               </p>
             </div>
-            <button
-              onClick={handleFinish}
-              className="w-full px-6 py-3 text-sm font-semibold bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
-            >
-              Run first scan ↗
-            </button>
+
+            {/* Model selection */}
+            <div>
+              <label className="block text-xs text-muted-foreground mb-2">Select model</label>
+              <div className="flex justify-center gap-1.5">
+                {['ChatGPT', 'Claude', 'Gemini', 'All'].map(m => (
+                  <button
+                    key={m}
+                    onClick={() => setSelectedModel(m)}
+                    className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                      selectedModel === m ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'
+                    }`}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <button
+                onClick={() => buildData(true)}
+                className="w-full px-6 py-3 text-sm font-semibold text-white rounded-lg hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: '#6C3EF4' }}
+              >
+                Run first scan ↗
+              </button>
+              <button
+                onClick={() => buildData(false)}
+                className="w-full px-6 py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Skip — I'll scan later
+              </button>
+            </div>
           </div>
         )}
       </div>
