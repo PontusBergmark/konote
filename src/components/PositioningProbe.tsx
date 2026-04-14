@@ -2,7 +2,6 @@ import { useState } from 'react'
 import type { Brand } from '../types'
 import { positioningProbeResults } from '../data/positioning'
 import { AssociationPill } from './AssociationPill'
-import { brands as allBrands } from '../data/brands'
 
 interface PositioningProbeProps {
   brands: Brand[]
@@ -10,8 +9,10 @@ interface PositioningProbeProps {
 }
 
 export function PositioningProbe({ brands, onAddAttribute }: PositioningProbeProps) {
-  const [primaryBrandId, setPrimaryBrandId] = useState('hubspot')
-  const [selectedCompetitors, setSelectedCompetitors] = useState<string[]>(['salesforce', 'attio', 'zoho', 'pipedrive'])
+  const [primaryBrandId, setPrimaryBrandId] = useState(brands[0]?.id ?? '')
+  const [selectedCompetitors, setSelectedCompetitors] = useState<string[]>(
+    brands.filter(b => b.id !== (brands[0]?.id ?? '')).map(b => b.id)
+  )
   const [selectedModel, setSelectedModel] = useState('All')
   const [showResults, setShowResults] = useState(true)
 
@@ -31,6 +32,11 @@ export function PositioningProbe({ brands, onAddAttribute }: PositioningProbePro
     if (strength === 'moderate') return 4
     return 2
   }
+
+  const competitorNames = selectedCompetitors
+    .map(id => brands.find(b => b.id === id)?.name)
+    .filter(Boolean)
+    .join(', ')
 
   return (
     <div className="p-6 max-w-6xl">
@@ -89,10 +95,14 @@ export function PositioningProbe({ brands, onAddAttribute }: PositioningProbePro
           </div>
         </div>
 
-        {/* Probe template */}
-        <div className="text-[11px] font-mono text-muted-foreground bg-secondary p-2.5 rounded leading-relaxed">
-          For each of the following brands — {primaryBrand.name} vs {selectedCompetitors.map(id => brands.find(b => b.id === id)?.name).filter(Boolean).join(', ')} — identify: (1) associations unique to {primaryBrand.name} that do not apply to the others, (2) associations unique to each competitor, (3) associations shared across all. Base your answer only on how these brands are commonly described and perceived. Return structured JSON with keys: uniqueToPrimary (array), uniqueToCompetitors (object keyed by brand), shared (array). For each term include a strength field: strong, moderate, or weak based on how consistently and prominently this association appears.
-        </div>
+        {/* Explanatory text — replaces the old prompt template block */}
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          We'll ask ChatGPT, Claude and Gemini what makes{' '}
+          <span className="font-medium text-foreground">{primaryBrand?.name ?? 'your brand'}</span>{' '}
+          distinct from{' '}
+          <span className="font-medium text-foreground">{competitorNames || 'selected competitors'}</span>{' '}
+          — based only on how these brands are described and perceived.
+        </p>
 
         <button
           onClick={() => setShowResults(true)}
@@ -108,7 +118,13 @@ export function PositioningProbe({ brands, onAddAttribute }: PositioningProbePro
           <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${2 + selectedCompetitors.length}, 1fr)` }}>
             {/* Unique to primary */}
             <div className="bg-card border border-border rounded-lg overflow-hidden">
-              <div className="px-3 py-2 text-[11px] font-medium text-primary-foreground" style={{ backgroundColor: 'var(--color-primary)' }}>
+              <div
+                className="px-3 py-2 text-[11px] font-medium"
+                style={{
+                  backgroundColor: `color-mix(in srgb, var(--color-primary) 10%, transparent)`,
+                  color: 'var(--color-primary)',
+                }}
+              >
                 Unique to {primaryBrand.name}
               </div>
               <div className="p-3 flex flex-wrap gap-1.5">
@@ -133,7 +149,13 @@ export function PositioningProbe({ brands, onAddAttribute }: PositioningProbePro
               const terms = result.uniqueToCompetitors[compId] ?? []
               return (
                 <div key={compId} className="bg-card border border-border rounded-lg overflow-hidden">
-                  <div className="px-3 py-2 text-[11px] font-medium" style={{ backgroundColor: comp.color, color: 'white' }}>
+                  <div
+                    className="px-3 py-2 text-[11px] font-medium"
+                    style={{
+                      backgroundColor: `color-mix(in srgb, ${comp.color} 10%, transparent)`,
+                      color: comp.color,
+                    }}
+                  >
                     Unique to {comp.name}
                   </div>
                   <div className="p-3 flex flex-wrap gap-1.5">
