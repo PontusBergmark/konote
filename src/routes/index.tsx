@@ -34,25 +34,24 @@ function Index() {
   const { exportView } = useExport()
   const [isScanning, setIsScanning] = useState(false)
 
+  const handleRunScan = () => {
+    setIsScanning(true)
+    const prompt = `Run a full association scan for ${app.selectedBrand?.name ?? 'brand'} across all tracked prompts and attributes. Return structured results for each attribute showing explicit mention frequency.`
+    console.log('[mock scan] sendPrompt:', prompt)
+    setTimeout(() => setIsScanning(false), 2500)
+  }
+
   if (app.showOnboarding) {
     return (
       <Onboarding
         onComplete={(data) => {
           const shouldScan = app.completeOnboarding(data)
           if (shouldScan) {
-            handleRunScan()
+            setTimeout(handleRunScan, 100)
           }
         }}
       />
     )
-  }
-
-  const handleRunScan = () => {
-    setIsScanning(true)
-    const prompt = `Run a full association scan for ${app.selectedBrand.name} across all tracked prompts and attributes. Return structured results for each attribute showing explicit mention frequency.`
-    console.log('[mock scan] sendPrompt:', prompt)
-    // Simulate scan delay
-    setTimeout(() => setIsScanning(false), 2500)
   }
 
   const handleAddAttributeFromProbe = (name: string) => {
