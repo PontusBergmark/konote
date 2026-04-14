@@ -99,6 +99,7 @@ function Index() {
           {app.currentView === 'overview' && (
             <Overview
               brands={app.brands}
+              selectedBrand={app.selectedBrand}
               attributes={app.attributes}
               onNavigate={app.setCurrentView}
               onRunScan={handleRunScan}
