@@ -5,15 +5,15 @@ interface TopBarProps {
   brands: Brand[]
   selectedBrand: Brand
   onBrandChange: (id: string) => void
+  onExport: () => void
 }
 
-export function TopBar({ brands, selectedBrand, onBrandChange }: TopBarProps) {
+export function TopBar({ brands, selectedBrand, onBrandChange, onExport }: TopBarProps) {
   const [open, setOpen] = useState(false)
 
   return (
     <div className="h-11 min-h-[44px] border-b flex items-center justify-between px-4" style={{ borderBottomWidth: '0.5px' }}>
       <div className="flex items-center gap-3">
-        {/* Brand selector */}
         <div className="relative">
           <button
             onClick={() => setOpen(!open)}
@@ -39,7 +39,6 @@ export function TopBar({ brands, selectedBrand, onBrandChange }: TopBarProps) {
           )}
         </div>
 
-        {/* Filter pills */}
         <div className="flex items-center gap-1.5">
           {['Last 30 days', 'All tags', 'All models'].map(f => (
             <span key={f} className="px-2 py-0.5 text-[11px] rounded-full bg-secondary text-secondary-foreground">
@@ -49,7 +48,10 @@ export function TopBar({ brands, selectedBrand, onBrandChange }: TopBarProps) {
         </div>
       </div>
 
-      <button className="px-3 py-1 text-xs border border-border rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
+      <button
+        onClick={onExport}
+        className="px-3 py-1 text-xs border border-border rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+      >
         Export
       </button>
     </div>

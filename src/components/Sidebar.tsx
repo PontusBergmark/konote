@@ -8,6 +8,8 @@ interface SidebarProps {
   searchQuery: string
   onSearchChange: (q: string) => void
   usage: UsageState
+  isDark: boolean
+  onToggleTheme: () => void
 }
 
 const NAV_SECTIONS: Array<{ label: string; items: Array<{ id: ViewId; name: string }> }> = [
@@ -34,16 +36,29 @@ const NAV_SECTIONS: Array<{ label: string; items: Array<{ id: ViewId; name: stri
   },
 ]
 
-export function Sidebar({ currentView, onViewChange, searchQuery, onSearchChange, usage }: SidebarProps) {
+export function Sidebar({ currentView, onViewChange, searchQuery, onSearchChange, usage, isDark, onToggleTheme }: SidebarProps) {
   const plan = PLANS[usage.currentTier]
 
   return (
     <div className="w-[220px] min-w-[220px] h-screen bg-sidebar-bg border-r border-border flex flex-col">
-      <div className="px-4 py-4 flex items-center gap-2">
-        <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
-          <span className="text-primary-foreground text-xs font-medium">L</span>
+      <div className="px-4 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
+            <span className="text-primary-foreground text-xs font-medium">L</span>
+          </div>
+          <span className="text-sm font-medium text-foreground">LLM Tracker</span>
         </div>
-        <span className="text-sm font-medium text-foreground">LLM Tracker</span>
+        <button
+          onClick={onToggleTheme}
+          className="w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {isDark ? (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          )}
+        </button>
       </div>
 
       <div className="px-3 pb-3">

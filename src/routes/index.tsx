@@ -12,6 +12,8 @@ import { AttributesManager } from '../components/AttributesManager'
 import { Settings } from '../components/Settings'
 import { useAppState } from '../hooks/useAppState'
 import { useUsage } from '../hooks/useUsage'
+import { useTheme } from '../hooks/useTheme'
+import { useExport } from '../hooks/useExport'
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -25,7 +27,9 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const app = useAppState()
-  const { usage } = useUsage()
+  const { usage, plan } = useUsage()
+  const { isDark, toggle: toggleTheme } = useTheme()
+  const { exportView } = useExport()
 
   const handleAddAttributeFromProbe = (name: string) => {
     app.addAttribute({
@@ -39,6 +43,10 @@ function Index() {
     app.setCurrentView('attributes')
   }
 
+  const handleExport = () => {
+    exportView(app.currentView, app.brands, app.attributes)
+  }
+
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar
@@ -47,12 +55,15 @@ function Index() {
         searchQuery={app.searchQuery}
         onSearchChange={app.setSearchQuery}
         usage={usage}
+        isDark={isDark}
+        onToggleTheme={toggleTheme}
       />
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar
           brands={app.brands}
           selectedBrand={app.selectedBrand}
           onBrandChange={app.setSelectedBrandId}
+          onExport={handleExport}
         />
         <SummaryBar
           selectedBrand={app.selectedBrand}
@@ -92,6 +103,8 @@ function Index() {
               searchQuery={app.searchQuery}
               onAdd={app.addPrompt}
               onRemove={app.removePrompt}
+              maxPrompts={plan.maxPrompts}
+              currentTier={usage.currentTier}
             />
           )}
           {app.currentView === 'attributes' && (
@@ -110,6 +123,7 @@ function Index() {
               onRemoveBrand={app.removeBrand}
               enabledModels={app.enabledModels}
               onToggleModel={app.toggleModel}
+              currentTier={usage.currentTier}
             />
           )}
         </div>
