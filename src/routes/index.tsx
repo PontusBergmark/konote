@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { createFileRoute } from "@tanstack/react-router";
 import { Sidebar } from '../components/Sidebar'
 import { TopBar } from '../components/TopBar'
@@ -31,9 +32,18 @@ function Index() {
   const { usage, plan } = useUsage()
   const { isDark, toggle: toggleTheme } = useTheme()
   const { exportView } = useExport()
+  const [isScanning, setIsScanning] = useState(false)
 
   if (app.showOnboarding) {
     return <Onboarding onComplete={app.completeOnboarding} />
+  }
+
+  const handleRunScan = () => {
+    setIsScanning(true)
+    const prompt = `Run a full association scan for ${app.selectedBrand.name} across all tracked prompts and attributes. Return structured results for each attribute showing explicit mention frequency.`
+    console.log('[mock scan] sendPrompt:', prompt)
+    // Simulate scan delay
+    setTimeout(() => setIsScanning(false), 2500)
   }
 
   const handleAddAttributeFromProbe = (name: string) => {
@@ -69,6 +79,8 @@ function Index() {
           selectedBrand={app.selectedBrand}
           onBrandChange={app.setSelectedBrandId}
           onExport={handleExport}
+          onRunScan={handleRunScan}
+          isScanning={isScanning}
         />
         <SummaryBar
           selectedBrand={app.selectedBrand}
@@ -81,6 +93,8 @@ function Index() {
               brands={app.brands}
               attributes={app.attributes}
               onNavigate={app.setCurrentView}
+              onRunScan={handleRunScan}
+              isScanning={isScanning}
             />
           )}
           {app.currentView === 'association-map' && (
