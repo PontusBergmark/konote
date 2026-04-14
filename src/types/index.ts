@@ -1,9 +1,8 @@
-export type PromptType = 'association_probe' | 'competitor_anchored' | 'entry_point'
-export type CEPStatus = 'unvalidated' | 'confirmed_cep' | 'rejected'
+export type PromptType = 'association_probe' | 'competitor_anchored'
 export type CoOccurrenceType = 'Competitor' | 'Category' | 'Concept' | 'Sub-brand' | 'Partner'
 export type Framing = 'Owned' | 'Compared' | 'Affiliated' | 'Emerging'
 export type TermStrength = 'strong' | 'moderate' | 'weak'
-export type ViewId = 'overview' | 'association-map' | 'attribute-scores' | 'entry-points' | 'co-occurrence' | 'positioning-probe' | 'prompts' | 'attributes' | 'settings'
+export type ViewId = 'overview' | 'association-map' | 'attribute-scores' | 'co-occurrence' | 'positioning-probe' | 'prompts' | 'attributes' | 'settings'
 
 export interface Brand {
   id: string
@@ -25,14 +24,13 @@ export interface Prompt {
   id: string
   text: string
   type: PromptType
-  cepStatus: CEPStatus
   tags: string[]
   createdAt: string
 }
 
 export interface PeriodScore {
   period: 'current' | 'previous'
-  scores: Record<string, Record<string, number>> // brand → attribute → score
+  scores: Record<string, Record<string, number>>
 }
 
 export interface CoOccurrenceEntry {

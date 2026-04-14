@@ -7,17 +7,16 @@ import type { ViewId } from '../types'
 interface OverviewProps {
   brands: Brand[]
   attributes: Attribute[]
-  promptsCount: { confirmed: number; total: number }
   onNavigate: (view: ViewId) => void
 }
 
-export function Overview({ brands, attributes, promptsCount, onNavigate }: OverviewProps) {
+export function Overview({ brands, attributes, onNavigate }: OverviewProps) {
   const intendedIds = attributes.filter(a => a.isIntended && a.active).map(a => a.id)
   const strongest = getStrongestAttribute(currentScores.scores)
   const strongestAttrName = strongest ? attributes.find(a => a.id === strongest.attributeId)?.name ?? strongest.attributeId : '—'
   const strongestBrand = strongest ? brands.find(b => b.id === strongest.brandId)?.name ?? '' : ''
+  const activeAttributeCount = attributes.filter(a => a.active).length
 
-  // Find top brand by positioning presence delta
   const brandPresences = brands.map(b => {
     const current = calculatePositioningPresence(b.id, intendedIds, currentScores.scores)
     const prev = calculatePositioningPresence(b.id, intendedIds, previousScores.scores)
@@ -25,17 +24,15 @@ export function Overview({ brands, attributes, promptsCount, onNavigate }: Overv
   })
   const topBrand = brandPresences.reduce((a, b) => a.delta > b.delta ? a : b)
 
-  // Co-occurrence insight
   const hubspotCooc = coOccurrenceData['hubspot'] ?? []
   const topCooc = hubspotCooc.reduce((a, b) => a.frequency > b.frequency ? a : b, hubspotCooc[0])
 
   return (
     <div className="p-6 max-w-5xl">
-      {/* Stat cards */}
       <div className="grid grid-cols-4 gap-3 mb-6">
         {[
           { label: 'Tracked brands', value: brands.length.toString() },
-          { label: 'Confirmed CEPs', value: `${promptsCount.confirmed}/${promptsCount.total}` },
+          { label: 'Attributes tracked', value: activeAttributeCount.toString() },
           { label: 'Top brand', value: `${topBrand.brand.name}`, sub: `+${topBrand.delta}%` },
           { label: 'Strongest attribute', value: strongestAttrName, sub: `${strongestBrand} · ${strongest?.score}` },
         ].map(card => (
@@ -47,7 +44,6 @@ export function Overview({ brands, attributes, promptsCount, onNavigate }: Overv
         ))}
       </div>
 
-      {/* Positioning presence by brand */}
       <div className="bg-card border border-border rounded-lg p-4 mb-6">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-medium text-foreground">Positioning presence by brand</h3>
@@ -73,7 +69,6 @@ export function Overview({ brands, attributes, promptsCount, onNavigate }: Overv
                   <span className="w-2 h-2 rounded-full" style={{ backgroundColor: bp.brand.color }} />
                   <span className="text-xs text-foreground">{bp.brand.name}</span>
                 </div>
-                {/* Sparkline (simplified two-point) */}
                 <svg width="48" height="16" className="flex-shrink-0">
                   <line
                     x1="4" y1={16 - bp.previous * 0.14}
@@ -95,17 +90,11 @@ export function Overview({ brands, attributes, promptsCount, onNavigate }: Overv
         </div>
       </div>
 
-      {/* Insight cards */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         <InsightCard
           title="Attribute scores"
           body={`Salesforce owns Enterprise ready at 95. HubSpot leads Ease of use at 85.`}
           onNavigate={() => onNavigate('attribute-scores')}
-        />
-        <InsightCard
-          title="Entry points"
-          body={`${promptsCount.confirmed} confirmed CEPs. HubSpot leads 'easiest CRM' at 73%.`}
-          onNavigate={() => onNavigate('entry-points')}
         />
         <InsightCard
           title="Co-occurrence"

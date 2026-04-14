@@ -5,7 +5,6 @@ import { SummaryBar } from '../components/SummaryBar'
 import { Overview } from '../components/Overview'
 import { AssociationMap } from '../components/AssociationMap'
 import { AttributeScores } from '../components/AttributeScores'
-import { EntryPoints } from '../components/EntryPoints'
 import { CoOccurrence } from '../components/CoOccurrence'
 import { PositioningProbe } from '../components/PositioningProbe'
 import { PromptLibrary } from '../components/PromptLibrary'
@@ -27,9 +26,6 @@ export const Route = createFileRoute("/")({
 function Index() {
   const app = useAppState()
   const { usage } = useUsage()
-
-  const confirmedCEPs = app.promptsList.filter(p => p.cepStatus === 'confirmed_cep').length
-  const totalEntryPoints = app.promptsList.filter(p => p.type === 'entry_point').length
 
   const handleAddAttributeFromProbe = (name: string) => {
     app.addAttribute({
@@ -61,7 +57,6 @@ function Index() {
         <SummaryBar
           selectedBrand={app.selectedBrand}
           attributes={app.attributes}
-          prompts={app.promptsList}
           currentView={app.currentView}
         />
         <div className="flex-1 overflow-y-auto">
@@ -69,7 +64,6 @@ function Index() {
             <Overview
               brands={app.brands}
               attributes={app.attributes}
-              promptsCount={{ confirmed: confirmedCEPs, total: totalEntryPoints }}
               onNavigate={app.setCurrentView}
             />
           )}
@@ -78,9 +72,6 @@ function Index() {
           )}
           {app.currentView === 'attribute-scores' && (
             <AttributeScores brands={app.brands} attributes={app.attributes} />
-          )}
-          {app.currentView === 'entry-points' && (
-            <EntryPoints prompts={app.promptsList} />
           )}
           {app.currentView === 'co-occurrence' && (
             <CoOccurrence
