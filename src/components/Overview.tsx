@@ -12,7 +12,7 @@ interface OverviewProps {
   isScanning?: boolean
 }
 
-export function Overview({ brands, attributes, onNavigate }: OverviewProps) {
+export function Overview({ brands, attributes, onNavigate, onRunScan, isScanning }: OverviewProps) {
   const intendedIds = attributes.filter(a => a.isIntended && a.active).map(a => a.id)
   const strongest = getStrongestAttribute(currentScores.scores)
   const strongestAttrName = strongest ? attributes.find(a => a.id === strongest.attributeId)?.name ?? strongest.attributeId : '—'
@@ -48,10 +48,24 @@ export function Overview({ brands, attributes, onNavigate }: OverviewProps) {
 
       <div className="bg-card border border-border rounded-lg p-4 mb-6">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-medium text-foreground">Positioning presence by brand</h3>
-          <button onClick={() => onNavigate('association-map')} className="text-[11px] text-primary hover:underline">
-            View full map →
-          </button>
+          <div className="flex items-center gap-3">
+            <h3 className="text-sm font-medium text-foreground">Positioning presence by brand</h3>
+          </div>
+          <div className="flex items-center gap-3">
+            {onRunScan && (
+              <button
+                onClick={onRunScan}
+                disabled={isScanning}
+                className="text-[11px] font-medium hover:underline disabled:opacity-50"
+                style={{ color: '#6C3EF4' }}
+              >
+                {isScanning ? 'Scanning…' : 'Run scan →'}
+              </button>
+            )}
+            <button onClick={() => onNavigate('association-map')} className="text-[11px] text-primary hover:underline">
+              View full map →
+            </button>
+          </div>
         </div>
         <div className="space-y-2.5">
           {brandPresences.map(bp => {
