@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import type { Brand, Prompt } from '../types'
+import type { Brand, Prompt, Attribute } from '../types'
 
 interface OnboardingProps {
-  onComplete: (data: { ownBrand: Brand; competitors: Brand[]; prompts: Prompt[]; runScan: boolean }) => void
+  onComplete: (data: { ownBrand: Brand; competitors: Brand[]; prompts: Prompt[]; attributes: Attribute[]; runScan: boolean }) => void
 }
 
 const SWATCHES = ['#FF5C35', '#00A1E0', '#1A1A2E', '#E42527', '#1A3C5E', '#6C3EF4', '#10B981', '#F59E0B']
@@ -12,24 +12,34 @@ const TEMPLATE_PROBES: { label: string; text: string; type: 'association_probe' 
   { label: 'Competitor-anchored', text: 'compare {brand} to its main competitors — what sets it apart', type: 'competitor_anchored' },
 ]
 
+const SUGGESTED_ATTRIBUTES = [
+  'Ease of use', 'Innovation', 'Reliability', 'Value for money',
+  'Enterprise ready', 'Customisation', 'Integration depth', 'Automation',
+  'Customer support', 'Security', 'Speed', 'Design quality',
+]
+
 export function Onboarding({ onComplete }: OnboardingProps) {
   const [step, setStep] = useState(0)
 
-  // Step 1
+  // Step 0 — Brand
   const [brandName, setBrandName] = useState('')
   const [brandColor, setBrandColor] = useState(SWATCHES[0])
 
-  // Step 2
+  // Step 1 — Competitors
   const [competitors, setCompetitors] = useState<{ name: string; color: string }[]>([])
   const [compName, setCompName] = useState('')
   const [compColor, setCompColor] = useState(SWATCHES[1])
 
-  // Step 3
+  // Step 2 — Attributes
+  const [selectedAttrs, setSelectedAttrs] = useState<string[]>([])
+  const [customAttr, setCustomAttr] = useState('')
+
+  // Step 3 — Prompts
   const [addedPrompts, setAddedPrompts] = useState<{ text: string; type: 'association_probe' | 'competitor_anchored' }[]>([])
   const [customPrompt, setCustomPrompt] = useState('')
   const [customType, setCustomType] = useState<'association_probe' | 'competitor_anchored'>('association_probe')
 
-  // Final screen
+  // Step 4 — Final
   const [selectedModel, setSelectedModel] = useState('All')
 
   const resolvedTemplates = TEMPLATE_PROBES.map(t => ({
@@ -44,6 +54,18 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     const usedColors = [...competitors.map(c => c.color), brandColor, compColor]
     const next = SWATCHES.find(s => !usedColors.includes(s)) ?? SWATCHES[2]
     setCompColor(next)
+  }
+
+  const toggleAttr = (name: string) => {
+    setSelectedAttrs(prev =>
+      prev.includes(name) ? prev.filter(a => a !== name) : [...prev, name]
+    )
+  }
+
+  const handleAddCustomAttr = () => {
+    if (!customAttr.trim() || selectedAttrs.includes(customAttr.trim())) return
+    setSelectedAttrs(prev => [...prev, customAttr.trim()])
+    setCustomAttr('')
   }
 
   const handleToggleTemplate = (template: typeof resolvedTemplates[0]) => {
@@ -81,16 +103,24 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       tags: [ownBrand.id],
       createdAt: now,
     }))
-    onComplete({ ownBrand, competitors: compBrands, prompts, runScan })
+    const attributes: Attribute[] = selectedAttrs.map((name, i) => ({
+      id: name.toLowerCase().replace(/\s+/g, '-'),
+      name,
+      description: '',
+      active: true,
+      order: i,
+      isIntended: true,
+    }))
+    onComplete({ ownBrand, competitors: compBrands, prompts, attributes, runScan })
   }
 
-  const stepLabels = ['Your brand', 'Your competitors', 'Your first prompts']
+  const stepLabels = ['Your brand', 'Your competitors', 'Your attributes', 'Your first prompts']
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
       <div className="w-full max-w-md px-6">
         {/* Stepper */}
-        {step < 3 && (
+        {step < 4 && (
           <div className="flex flex-col gap-0 mb-8">
             {stepLabels.map((label, i) => (
               <div key={label} className="flex items-start gap-3">
@@ -122,7 +152,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           </div>
         )}
 
-        {/* Step 1 */}
+        {/* Step 0 — Brand */}
         {step === 0 && (
           <div className="space-y-4">
             <div>
@@ -159,7 +189,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           </div>
         )}
 
-        {/* Step 2 */}
+        {/* Step 1 — Competitors */}
         {step === 1 && (
           <div className="space-y-4">
             {competitors.length > 0 && (
@@ -220,14 +250,91 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           </div>
         )}
 
-        {/* Step 3 — Prompts */}
+        {/* Step 2 — Attributes */}
         {step === 2 && (
+          <div className="space-y-4">
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              What attributes do you want <span className="font-medium text-foreground">{brandName}</span> to be known for? Pick the associations you'd like LLMs to surface about your brand.
+            </p>
+
+            <div className="flex flex-wrap gap-1.5">
+              {SUGGESTED_ATTRIBUTES.map(attr => {
+                const active = selectedAttrs.includes(attr)
+                return (
+                  <button
+                    key={attr}
+                    onClick={() => toggleAttr(attr)}
+                    className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors ${
+                      active
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-secondary text-secondary-foreground hover:bg-accent'
+                    }`}
+                  >
+                    {attr}
+                    {active && <span className="ml-1">×</span>}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Custom attributes already added (not in suggestions) */}
+            {selectedAttrs.filter(a => !SUGGESTED_ATTRIBUTES.includes(a)).length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {selectedAttrs.filter(a => !SUGGESTED_ATTRIBUTES.includes(a)).map(attr => (
+                  <button
+                    key={attr}
+                    onClick={() => toggleAttr(attr)}
+                    className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-primary text-primary-foreground transition-colors"
+                  >
+                    {attr} <span className="ml-1">×</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <input
+                value={customAttr}
+                onChange={e => setCustomAttr(e.target.value)}
+                placeholder="Add your own attribute…"
+                onKeyDown={e => e.key === 'Enter' && handleAddCustomAttr()}
+                className="flex-1 px-3 py-2 text-sm bg-background border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+              <button
+                onClick={handleAddCustomAttr}
+                disabled={!customAttr.trim()}
+                className="px-3 py-2 text-sm bg-secondary text-secondary-foreground rounded-md hover:opacity-90 disabled:opacity-40"
+              >
+                Add
+              </button>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={() => setStep(3)}
+                className="flex-1 px-4 py-2.5 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:opacity-90"
+              >
+                {selectedAttrs.length > 0 ? 'Next →' : 'Next →'}
+              </button>
+              {selectedAttrs.length === 0 && (
+                <button
+                  onClick={() => setStep(3)}
+                  className="px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground"
+                >
+                  Skip
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Step 3 — Prompts */}
+        {step === 3 && (
           <div className="space-y-4">
             <p className="text-xs text-muted-foreground leading-relaxed">
               These are the questions we ask ChatGPT, Claude and Gemini about your brand — the answers become your association data.
             </p>
 
-            {/* Template prompts — each is a separate one-click add */}
             <div className="space-y-1.5">
               {resolvedTemplates.map(t => {
                 const active = addedPrompts.some(p => p.text === t.text)
@@ -250,7 +357,6 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               })}
             </div>
 
-            {/* Custom prompt with type selector */}
             <div className="space-y-1.5">
               <div className="flex gap-1">
                 {(['association_probe', 'competitor_anchored'] as const).map(t => (
@@ -283,7 +389,6 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               </div>
             </div>
 
-            {/* Custom prompts list */}
             {addedPrompts.filter(p => !resolvedTemplates.some(t => t.text === p.text)).length > 0 && (
               <div className="space-y-1">
                 {addedPrompts
@@ -307,7 +412,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
             <button
               disabled={addedPrompts.length < 2}
-              onClick={() => setStep(3)}
+              onClick={() => setStep(4)}
               className="w-full px-4 py-2.5 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               {addedPrompts.length < 2
@@ -318,7 +423,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
         )}
 
         {/* Final screen */}
-        {step === 3 && (
+        {step === 4 && (
           <div className="text-center space-y-6">
             <div>
               <h2 className="text-lg font-semibold text-foreground mb-2">You're ready.</h2>
@@ -328,7 +433,6 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               </p>
             </div>
 
-            {/* Model selection */}
             <div>
               <label className="block text-xs text-muted-foreground mb-2">Select model</label>
               <div className="flex justify-center gap-1.5">
