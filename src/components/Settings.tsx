@@ -10,6 +10,7 @@ interface SettingsProps {
   enabledModels: Record<string, boolean>
   onToggleModel: (model: string) => void
   currentTier: 'free' | 'starter' | 'pro'
+  onResetOnboarding?: () => void
 }
 
 const SWATCHES = ['#FF5C35', '#00A1E0', '#1A1A2E', '#E42527', '#1A3C5E', '#6C3EF4', '#10B981', '#F59E0B']

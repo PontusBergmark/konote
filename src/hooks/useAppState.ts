@@ -1,23 +1,38 @@
 import { useState, useCallback } from 'react'
 import type { ViewId, Brand, Attribute, Prompt } from '../types'
-import { brands as initialBrands } from '../data/brands'
 import { attributes as initialAttributes } from '../data/attributes'
-import { prompts as initialPrompts } from '../data/prompts'
 
 export function useAppState() {
   const [currentView, setCurrentView] = useState<ViewId>('overview')
-  const [selectedBrandId, setSelectedBrandId] = useState('hubspot')
+  const [selectedBrandId, setSelectedBrandId] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
-  const [brands, setBrands] = useState<Brand[]>(initialBrands)
+  const [brands, setBrands] = useState<Brand[]>([])
   const [attributes, setAttributes] = useState<Attribute[]>(initialAttributes)
-  const [promptsList, setPromptsList] = useState<Prompt[]>(initialPrompts)
+  const [promptsList, setPromptsList] = useState<Prompt[]>([])
   const [enabledModels, setEnabledModels] = useState<Record<string, boolean>>({
     ChatGPT: true,
     Claude: true,
     Gemini: true,
   })
+  const [onboardingDone, setOnboardingDone] = useState(false)
 
   const selectedBrand = brands.find(b => b.id === selectedBrandId) ?? brands[0]
+  const showOnboarding = !onboardingDone && promptsList.length === 0
+
+  const completeOnboarding = useCallback((data: { ownBrand: Brand; competitors: Brand[]; prompts: Prompt[] }) => {
+    setBrands([data.ownBrand, ...data.competitors])
+    setSelectedBrandId(data.ownBrand.id)
+    setPromptsList(data.prompts)
+    setOnboardingDone(true)
+  }, [])
+
+  const resetToOnboarding = useCallback(() => {
+    setBrands([])
+    setPromptsList([])
+    setSelectedBrandId('')
+    setOnboardingDone(false)
+    setCurrentView('overview')
+  }, [])
 
   const addBrand = useCallback((brand: Brand) => {
     setBrands(prev => [...prev, brand])
@@ -68,5 +83,6 @@ export function useAppState() {
     attributes, addAttribute, removeAttribute, updateAttribute, reorderAttributes,
     promptsList, addPrompt, removePrompt,
     enabledModels, toggleModel,
+    showOnboarding, completeOnboarding, resetToOnboarding,
   }
 }
