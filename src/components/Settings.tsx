@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import type { Brand } from '../types'
+import { PLANS } from '../config/plan'
+import { UpgradeNudge } from './UpgradeNudge'
 
 interface SettingsProps {
   brands: Brand[]
@@ -7,16 +9,19 @@ interface SettingsProps {
   onRemoveBrand: (id: string) => void
   enabledModels: Record<string, boolean>
   onToggleModel: (model: string) => void
+  currentTier: 'free' | 'starter' | 'pro'
 }
 
 const SWATCHES = ['#FF5C35', '#00A1E0', '#1A1A2E', '#E42527', '#1A3C5E', '#6C3EF4', '#10B981', '#F59E0B']
 
-export function Settings({ brands, onAddBrand, onRemoveBrand, enabledModels, onToggleModel }: SettingsProps) {
+export function Settings({ brands, onAddBrand, onRemoveBrand, enabledModels, onToggleModel, currentTier }: SettingsProps) {
   const [newName, setNewName] = useState('')
   const [newColor, setNewColor] = useState(SWATCHES[0])
+  const plan = PLANS[currentTier]
+  const atLimit = brands.length >= plan.maxBrands
 
   const handleAdd = () => {
-    if (!newName.trim()) return
+    if (!newName.trim() || atLimit) return
     onAddBrand({
       id: newName.trim().toLowerCase().replace(/\s+/g, '-'),
       name: newName.trim(),
@@ -30,7 +35,6 @@ export function Settings({ brands, onAddBrand, onRemoveBrand, enabledModels, onT
     <div className="p-6 max-w-2xl">
       <h2 className="text-sm font-medium text-foreground mb-4">Settings</h2>
 
-      {/* Brands */}
       <div className="mb-6">
         <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Brands</h3>
         <div className="space-y-1.5 mb-3">
@@ -42,30 +46,36 @@ export function Settings({ brands, onAddBrand, onRemoveBrand, enabledModels, onT
             </div>
           ))}
         </div>
-        <div className="flex items-center gap-2">
-          <input
-            value={newName}
-            onChange={e => setNewName(e.target.value)}
-            placeholder="Brand name"
-            className="px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+        {atLimit ? (
+          <UpgradeNudge
+            feature={`You've reached the ${plan.maxBrands}-brand limit on ${plan.name}.`}
+            requiredTier={currentTier === 'free' ? 'starter' : 'pro'}
           />
-          <div className="flex gap-1">
-            {SWATCHES.map(c => (
-              <button
-                key={c}
-                onClick={() => setNewColor(c)}
-                className={`w-5 h-5 rounded-full border-2 ${newColor === c ? 'border-foreground' : 'border-transparent'}`}
-                style={{ backgroundColor: c }}
-              />
-            ))}
+        ) : (
+          <div className="flex items-center gap-2">
+            <input
+              value={newName}
+              onChange={e => setNewName(e.target.value)}
+              placeholder="Brand name"
+              className="px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+            <div className="flex gap-1">
+              {SWATCHES.map(c => (
+                <button
+                  key={c}
+                  onClick={() => setNewColor(c)}
+                  className={`w-5 h-5 rounded-full border-2 ${newColor === c ? 'border-foreground' : 'border-transparent'}`}
+                  style={{ backgroundColor: c }}
+                />
+              ))}
+            </div>
+            <button onClick={handleAdd} className="px-3 py-1.5 text-xs bg-primary text-primary-foreground rounded-md hover:opacity-90">
+              Add
+            </button>
           </div>
-          <button onClick={handleAdd} className="px-3 py-1.5 text-xs bg-primary text-primary-foreground rounded-md hover:opacity-90">
-            Add
-          </button>
-        </div>
+        )}
       </div>
 
-      {/* Models */}
       <div>
         <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Models</h3>
         <div className="space-y-1.5">
