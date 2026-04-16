@@ -12,16 +12,18 @@ interface PromptLibraryProps {
 }
 
 const TYPE_LABELS: Record<PromptType, { label: string; color: string; bg: string }> = {
-  association_probe: { label: 'Probe', color: 'var(--badge-concept-text)', bg: 'var(--badge-concept-bg)' },
+  category: { label: 'Category', color: 'var(--badge-category-text, var(--badge-concept-text))', bg: 'var(--badge-category-bg, var(--badge-concept-bg))' },
   competitor_anchored: { label: 'Anchored', color: 'var(--badge-competitor-text)', bg: 'var(--badge-competitor-bg)' },
+  association_probe: { label: 'Brand', color: 'var(--badge-concept-text)', bg: 'var(--badge-concept-bg)' },
 }
 
 export function PromptLibrary({ prompts, searchQuery, onAdd, onRemove, maxPrompts, currentTier }: PromptLibraryProps) {
   const [newText, setNewText] = useState('')
-  const [newType, setNewType] = useState<PromptType>('association_probe')
+  const [newType, setNewType] = useState<PromptType>('category')
   const [collapsed, setCollapsed] = useState<Record<PromptType, boolean>>({
-    association_probe: false,
+    category: false,
     competitor_anchored: false,
+    association_probe: false,
   })
 
   const atLimit = prompts.length >= maxPrompts
@@ -31,8 +33,9 @@ export function PromptLibrary({ prompts, searchQuery, onAdd, onRemove, maxPrompt
   )
 
   const grouped: Record<PromptType, Prompt[]> = {
-    association_probe: filtered.filter(p => p.type === 'association_probe'),
+    category: filtered.filter(p => p.type === 'category'),
     competitor_anchored: filtered.filter(p => p.type === 'competitor_anchored'),
+    association_probe: filtered.filter(p => p.type === 'association_probe'),
   }
 
   const handleAdd = () => {
