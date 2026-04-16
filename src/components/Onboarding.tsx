@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import type { Brand, Prompt, Attribute } from '../types'
+import { useState, useMemo } from 'react'
+import type { Brand, Prompt, Attribute, PromptType } from '../types'
 
 interface OnboardingProps {
   onComplete: (data: { ownBrand: Brand; competitors: Brand[]; prompts: Prompt[]; attributes: Attribute[]; runScan: boolean }) => void
@@ -7,10 +7,28 @@ interface OnboardingProps {
 
 const SWATCHES = ['#FF5C35', '#00A1E0', '#1A1A2E', '#E42527', '#1A3C5E', '#6C3EF4', '#10B981', '#F59E0B']
 
-const TEMPLATE_PROBES: { label: string; text: string; type: 'association_probe' | 'competitor_anchored' }[] = [
-  { label: 'Association probe', text: "describe {brand}'s strengths and what it's known for", type: 'association_probe' },
-  { label: 'Competitor-anchored', text: 'compare {brand} to its main competitors — what sets it apart', type: 'competitor_anchored' },
-]
+type PromptDraft = { text: string; type: PromptType }
+
+const TYPE_META: Record<PromptType, { label: string; rank: number; blurb: string; example: string }> = {
+  category: {
+    label: 'Category',
+    rank: 1,
+    blurb: 'Closest to real buyer behaviour — no brand named.',
+    example: 'best {category} for {segment}',
+  },
+  competitor_anchored: {
+    label: 'Competitor-anchored',
+    rank: 2,
+    blurb: 'Real query, but anchored to a competitor.',
+    example: 'alternatives to {competitor}',
+  },
+  association_probe: {
+    label: 'Brand',
+    rank: 3,
+    blurb: 'Diagnostic — useful for validation, not buyer-journey signal.',
+    example: 'what is {brand} known for',
+  },
+}
 
 const SUGGESTED_ATTRIBUTES = [
   'Ease of use', 'Innovation', 'Reliability', 'Value for money',
