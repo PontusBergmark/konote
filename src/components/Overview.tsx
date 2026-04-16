@@ -56,6 +56,30 @@ function relativeTime(date: Date): string {
   return `${days} day${days === 1 ? '' : 's'} ago`
 }
 
+type Freshness = 'fresh' | 'aging' | 'stale'
+function getFreshness(date: Date): Freshness {
+  const hours = (Date.now() - date.getTime()) / 3_600_000
+  if (hours < 24) return 'fresh'
+  if (hours < 24 * 7) return 'aging'
+  return 'stale'
+}
+function freshnessTone(f: Freshness): { dot: string; text: string; label: string } {
+  switch (f) {
+    case 'fresh': return { dot: 'bg-emerald-500', text: 'text-emerald-600 dark:text-emerald-400', label: 'Fresh' }
+    case 'aging': return { dot: 'bg-amber-500', text: 'text-amber-600 dark:text-amber-400', label: 'Aging' }
+    case 'stale': return { dot: 'bg-destructive', text: 'text-destructive', label: 'Stale' }
+  }
+}
+
+// Heuristic: map co-occurrence entity type → likely surfacing prompt type
+function promptTypeForEntity(type: string): { label: string; tone: string } {
+  switch (type) {
+    case 'Category': return { label: 'category', tone: 'text-foreground' }
+    case 'Competitor': return { label: 'competitor', tone: 'text-foreground' }
+    default: return { label: 'brand', tone: 'text-muted-foreground' }
+  }
+}
+
 export function Overview({
   brands,
   selectedBrand,
@@ -130,9 +154,6 @@ export function Overview({
   })
 
   const landingCount = intendedResults.filter(r => r.status === 'strong' || r.status === 'moderate').length
-  const strongest = intendedResults.length > 0
-    ? intendedResults.reduce((a, b) => (a.current >= b.current ? a : b))
-    : null
   const biggestGap = intendedResults.length > 0
     ? intendedResults.reduce((a, b) => (a.current <= b.current ? a : b))
     : null
@@ -148,8 +169,17 @@ export function Overview({
         See what concepts LLMs associate with your brand — and whether they match your positioning.
       </h1>
       <div className="flex items-center gap-2 mb-5 text-[11px] text-muted-foreground">
-        {lastScannedAt && <span>Last scanned {relativeTime(lastScannedAt)}</span>}
-        {lastScannedAt && onRunScan && <span>·</span>}
+        {lastScannedAt && (() => {
+          const f = getFreshness(lastScannedAt)
+          const tone = freshnessTone(f)
+          return (
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-border bg-card">
+              <span className={`w-1.5 h-1.5 rounded-full ${tone.dot}`} />
+              <span className={tone.text}>{tone.label}</span>
+              <span className="text-muted-foreground">· scanned {relativeTime(lastScannedAt)}</span>
+            </span>
+          )
+        })()}
         {onRunScan && (
           <button
             onClick={onRunScan}
@@ -166,8 +196,19 @@ export function Overview({
       <div className="bg-card border border-border rounded-lg overflow-hidden mb-4">
         {topAssociations.length === 0 ? (
           <div className="p-6">
-            <p className="text-xs text-muted-foreground mb-2">LLMs associate {selectedBrand.name} with</p>
-            <p className="text-sm text-muted-foreground">No meaningful associations surfaced yet. Try running a scan with more prompts.</p>
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-2">
+              LLMs associate {selectedBrand.name} with
+            </p>
+            <p className="text-sm text-foreground mb-1">Not enough signal yet.</p>
+            <p className="text-xs text-muted-foreground mb-3">
+              No concept passed the threshold. This usually means too few prompts, or prompts that don't surface {selectedBrand.name} naturally.
+            </p>
+            <button
+              onClick={() => onNavigate('prompts')}
+              className="text-[11px] font-medium text-primary hover:underline"
+            >
+              Add more prompts →
+            </button>
           </div>
         ) : (
           <>
@@ -233,11 +274,12 @@ export function Overview({
           <p className="text-[11px] text-muted-foreground">Strongly or moderately associated</p>
         </div>
         <div className="bg-card border border-border rounded-lg p-3">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Strongest association</p>
-          <p className="text-lg font-medium text-foreground mt-0.5">{strongest?.attr.name ?? '—'}</p>
-          <p className="text-[11px] text-muted-foreground">
-            {strongest ? `${statusLabel(strongest.status)} · ${Math.round(strongest.current)}` : 'No data'}
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Concepts surfaced</p>
+          <p className="text-lg font-medium text-foreground mt-0.5">
+            {topAssociations.length + Math.max(0, discovered.length - topAssociations.filter(a => !a.intended).length)}
+            <span className="text-sm text-muted-foreground"> this scan</span>
           </p>
+          <p className="text-[11px] text-muted-foreground">{discovered.length} not in your intended set</p>
         </div>
         <div className="bg-card border border-border rounded-lg p-3">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Biggest gap</p>
@@ -330,16 +372,21 @@ export function Overview({
               Concepts LLMs surfaced that you didn't claim. Signals worth a look — not failures.
             </p>
             <div className="flex flex-wrap gap-2">
-              {discovered.map(d => (
-                <span
-                  key={d.entity}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border border-border bg-background text-foreground"
-                >
-                  <span className="font-medium">{d.entity}</span>
-                  <span className="text-[10px] text-muted-foreground">{d.type.toLowerCase()}</span>
-                  <span className="text-[10px] text-muted-foreground tabular-nums">{d.frequency}</span>
-                </span>
-              ))}
+              {discovered.map(d => {
+                const pt = promptTypeForEntity(d.type)
+                return (
+                  <span
+                    key={d.entity}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border border-border bg-background text-foreground"
+                  >
+                    <span className="font-medium">{d.entity}</span>
+                    <span className="text-[9px] uppercase tracking-wide text-muted-foreground border border-border rounded px-1 py-px">
+                      {pt.label}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground tabular-nums">{d.frequency}</span>
+                  </span>
+                )
+              })}
             </div>
           </div>
         </section>
