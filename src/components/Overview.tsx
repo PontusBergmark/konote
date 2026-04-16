@@ -12,6 +12,7 @@ interface OverviewProps {
   isScanning?: boolean
   lastScannedAt?: Date | null
   hasScanned?: boolean
+  onPromoteToIntended?: (name: string) => void
 }
 
 type ValidationStatus = 'strong' | 'moderate' | 'weak' | 'absent'
