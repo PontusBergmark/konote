@@ -162,29 +162,54 @@ export function Overview({
         )}
       </div>
 
-      {/* HERO: top associations */}
-      <div className="bg-card border border-border rounded-lg p-5 mb-4">
-        <p className="text-xs text-muted-foreground mb-3">LLMs associate {selectedBrand.name} with:</p>
+      {/* HERO: concept cloud */}
+      <div className="bg-card border border-border rounded-lg px-6 py-7 mb-4">
+        <div className="flex items-baseline justify-between mb-5">
+          <p className="text-xs text-muted-foreground">LLMs associate {selectedBrand.name} with</p>
+          <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+              intended
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
+              discovered
+            </span>
+          </div>
+        </div>
         {topAssociations.length === 0 ? (
           <p className="text-sm text-muted-foreground">No meaningful associations surfaced yet. Try running a scan with more prompts.</p>
         ) : (
-          <div className="flex flex-wrap gap-2">
-            {topAssociations.map((a, i) => (
-              <span
-                key={`${a.label}-${i}`}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs ${
-                  a.intended
-                    ? 'border border-primary/40 bg-primary/8 text-foreground'
-                    : 'border border-border bg-secondary text-foreground'
-                }`}
-              >
-                <span className="text-[10px] text-muted-foreground tabular-nums">#{i + 1}</span>
-                <span className="font-medium">{a.label}</span>
-                <span className="text-[10px] text-muted-foreground tabular-nums">{Math.round(a.score)}</span>
-                {a.intended && <span className="text-[9px] uppercase tracking-wide text-primary">intended</span>}
-              </span>
-            ))}
-          </div>
+          (() => {
+            const max = topAssociations[0].score
+            // Tight typographic scale: rank-based, not linear, so hierarchy is crisp
+            const sizeFor = (i: number, score: number) => {
+              const ratio = score / max
+              if (i === 0) return 'text-4xl leading-none'
+              if (i === 1) return 'text-3xl leading-none'
+              if (i === 2) return 'text-2xl leading-none'
+              if (ratio >= 0.5) return 'text-xl leading-none'
+              return 'text-base leading-none'
+            }
+            const weightFor = (i: number) => (i === 0 ? 'font-semibold' : i < 3 ? 'font-medium' : 'font-normal')
+            return (
+              <div className="flex flex-wrap items-baseline gap-x-5 gap-y-3">
+                {topAssociations.map((a, i) => (
+                  <span
+                    key={`${a.label}-${i}`}
+                    className={`inline-flex items-baseline gap-1.5 tracking-tight ${sizeFor(i, a.score)} ${weightFor(i)} ${
+                      a.intended ? 'text-primary' : 'text-foreground/80'
+                    }`}
+                  >
+                    {a.label}
+                    <span className="text-[10px] font-normal text-muted-foreground tabular-nums self-end mb-0.5">
+                      {Math.round(a.score)}
+                    </span>
+                  </span>
+                ))}
+              </div>
+            )
+          })()
         )}
       </div>
 
