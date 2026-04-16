@@ -162,54 +162,62 @@ export function Overview({
         )}
       </div>
 
-      {/* HERO: concept cloud */}
-      <div className="bg-card border border-border rounded-lg px-6 py-7 mb-4">
-        <div className="flex items-baseline justify-between mb-5">
-          <p className="text-xs text-muted-foreground">LLMs associate {selectedBrand.name} with</p>
-          <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-              intended
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
-              discovered
-            </span>
-          </div>
-        </div>
+      {/* HERO: ranked associations */}
+      <div className="bg-card border border-border rounded-lg overflow-hidden mb-4">
         {topAssociations.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No meaningful associations surfaced yet. Try running a scan with more prompts.</p>
+          <div className="p-6">
+            <p className="text-xs text-muted-foreground mb-2">LLMs associate {selectedBrand.name} with</p>
+            <p className="text-sm text-muted-foreground">No meaningful associations surfaced yet. Try running a scan with more prompts.</p>
+          </div>
         ) : (
-          (() => {
-            const max = topAssociations[0].score
-            // Tight typographic scale: rank-based, not linear, so hierarchy is crisp
-            const sizeFor = (i: number, score: number) => {
-              const ratio = score / max
-              if (i === 0) return 'text-4xl leading-none'
-              if (i === 1) return 'text-3xl leading-none'
-              if (i === 2) return 'text-2xl leading-none'
-              if (ratio >= 0.5) return 'text-xl leading-none'
-              return 'text-base leading-none'
-            }
-            const weightFor = (i: number) => (i === 0 ? 'font-semibold' : i < 3 ? 'font-medium' : 'font-normal')
-            return (
-              <div className="flex flex-wrap items-baseline gap-x-5 gap-y-3">
-                {topAssociations.map((a, i) => (
-                  <span
-                    key={`${a.label}-${i}`}
-                    className={`inline-flex items-baseline gap-1.5 tracking-tight ${sizeFor(i, a.score)} ${weightFor(i)} ${
-                      a.intended ? 'text-primary' : 'text-foreground/80'
-                    }`}
-                  >
-                    {a.label}
-                    <span className="text-[10px] font-normal text-muted-foreground tabular-nums self-end mb-0.5">
+          <>
+            {/* #1 — dominant */}
+            <div className="px-6 pt-6 pb-5 border-b border-border">
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-2">
+                LLMs associate {selectedBrand.name} most with
+              </p>
+              <div className="flex items-baseline gap-3 flex-wrap">
+                <h2 className={`text-3xl font-semibold tracking-tight ${topAssociations[0].intended ? 'text-primary' : 'text-foreground'}`}>
+                  {topAssociations[0].label}
+                </h2>
+                <span className="text-sm text-muted-foreground tabular-nums">{Math.round(topAssociations[0].score)}</span>
+                {topAssociations[0].intended && (
+                  <span className="text-[9px] uppercase tracking-wide text-primary border border-primary/40 px-1.5 py-0.5 rounded">
+                    intended
+                  </span>
+                )}
+              </div>
+            </div>
+            {/* Ranked rest */}
+            <div className="divide-y divide-border">
+              {topAssociations.slice(1).map((a, i) => {
+                const pct = (a.score / topAssociations[0].score) * 100
+                return (
+                  <div key={`${a.label}-${i}`} className="flex items-center gap-4 px-6 py-2.5">
+                    <span className="text-[10px] text-muted-foreground tabular-nums w-4">{i + 2}</span>
+                    <span className={`text-sm w-40 truncate ${a.intended ? 'text-primary font-medium' : 'text-foreground'}`}>
+                      {a.label}
+                    </span>
+                    <div className="flex-1 h-1 rounded-full bg-secondary overflow-hidden">
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${pct}%`,
+                          backgroundColor: a.intended ? selectedBrand.color : 'hsl(var(--muted-foreground) / 0.4)',
+                        }}
+                      />
+                    </div>
+                    <span className="text-xs text-muted-foreground tabular-nums w-8 text-right">
                       {Math.round(a.score)}
                     </span>
-                  </span>
-                ))}
-              </div>
-            )
-          })()
+                    <span className="text-[9px] uppercase tracking-wide w-14 text-right text-primary">
+                      {a.intended ? 'intended' : ''}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </>
         )}
       </div>
 
