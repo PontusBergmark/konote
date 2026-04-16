@@ -172,8 +172,17 @@ export function Overview({
         See what concepts LLMs associate with your brand — and whether they match your positioning.
       </h1>
       <div className="flex items-center gap-2 mb-5 text-[11px] text-muted-foreground">
-        {lastScannedAt && <span>Last scanned {relativeTime(lastScannedAt)}</span>}
-        {lastScannedAt && onRunScan && <span>·</span>}
+        {lastScannedAt && (() => {
+          const f = getFreshness(lastScannedAt)
+          const tone = freshnessTone(f)
+          return (
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-border bg-card">
+              <span className={`w-1.5 h-1.5 rounded-full ${tone.dot}`} />
+              <span className={tone.text}>{tone.label}</span>
+              <span className="text-muted-foreground">· scanned {relativeTime(lastScannedAt)}</span>
+            </span>
+          )
+        })()}
         {onRunScan && (
           <button
             onClick={onRunScan}
