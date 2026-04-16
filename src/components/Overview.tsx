@@ -154,9 +154,6 @@ export function Overview({
   })
 
   const landingCount = intendedResults.filter(r => r.status === 'strong' || r.status === 'moderate').length
-  const strongest = intendedResults.length > 0
-    ? intendedResults.reduce((a, b) => (a.current >= b.current ? a : b))
-    : null
   const biggestGap = intendedResults.length > 0
     ? intendedResults.reduce((a, b) => (a.current <= b.current ? a : b))
     : null
