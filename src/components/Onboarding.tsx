@@ -188,40 +188,32 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const stepLabels = ['Your brand', 'Your competitors', 'Your attributes', 'Your first prompts']
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
-      <div className="w-full max-w-md px-6">
-        {/* Stepper */}
+    <div className="min-h-screen bg-background flex justify-center">
+      <div className="w-full max-w-md px-6 pt-24 pb-12">
+        {/* Compact stepper — constant size across steps */}
         {step < 4 && (
-          <div className="flex flex-col gap-0 mb-8">
-            {stepLabels.map((label, i) => (
-              <div key={label} className="flex items-start gap-3">
-                <div className="flex flex-col items-center">
-                  <div
-                    className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium border-2 transition-colors ${
-                      i < step
-                        ? 'bg-primary border-primary text-primary-foreground'
-                        : i === step
-                          ? 'border-primary text-primary bg-background'
-                          : 'border-border text-muted-foreground bg-background'
-                    }`}
-                  >
-                    {i < step ? '✓' : i + 1}
-                  </div>
-                  {i < stepLabels.length - 1 && (
-                    <div className={`w-0.5 h-6 ${i < step ? 'bg-primary' : 'bg-border'}`} />
-                  )}
-                </div>
-                <span
-                  className={`text-sm mt-1 ${
-                    i === step ? 'text-foreground font-medium' : 'text-muted-foreground'
+          <div className="mb-8">
+            <div className="flex items-center gap-1.5 mb-2">
+              {stepLabels.map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-1 flex-1 rounded-full transition-colors ${
+                    i < step ? 'bg-primary' : i === step ? 'bg-primary/60' : 'bg-border'
                   }`}
-                >
-                  {label}
-                </span>
-              </div>
-            ))}
+                />
+              ))}
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-medium text-foreground">{stepLabels[step]}</p>
+              <p className="text-[10px] text-muted-foreground tabular-nums">
+                Step {step + 1} of {stepLabels.length}
+              </p>
+            </div>
           </div>
         )}
+
+        {/* Stable content area — prevents jumpy vertical shifts between steps */}
+        <div className="min-h-[460px]">
 
         {/* Step 0 — Brand */}
         {step === 0 && (
@@ -609,6 +601,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   )

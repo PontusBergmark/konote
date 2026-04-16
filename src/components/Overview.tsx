@@ -198,12 +198,14 @@ export function Overview({
                     <span className={`text-sm w-40 truncate ${a.intended ? 'text-primary font-medium' : 'text-foreground'}`}>
                       {a.label}
                     </span>
-                    <div className="flex-1 h-1 rounded-full bg-secondary overflow-hidden">
+                    <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
                       <div
-                        className="h-full rounded-full"
+                        className="h-full rounded-full transition-all"
                         style={{
-                          width: `${pct}%`,
-                          backgroundColor: a.intended ? selectedBrand.color : 'hsl(var(--muted-foreground) / 0.4)',
+                          width: `${Math.max(pct, 4)}%`,
+                          backgroundColor: a.intended
+                            ? selectedBrand.color
+                            : `color-mix(in oklab, ${selectedBrand.color} 35%, transparent)`,
                         }}
                       />
                     </div>
