@@ -1,4 +1,4 @@
-export type PromptType = 'association_probe' | 'competitor_anchored'
+export type PromptType = 'category' | 'competitor_anchored' | 'association_probe'
 export type CoOccurrenceType = 'Competitor' | 'Category' | 'Concept' | 'Sub-brand' | 'Partner'
 export type Framing = 'Owned' | 'Compared' | 'Affiliated' | 'Emerging'
 export type TermStrength = 'strong' | 'moderate' | 'weak'
