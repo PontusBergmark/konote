@@ -90,6 +90,7 @@ export function Overview({
   isScanning,
   lastScannedAt,
   hasScanned = true,
+  onPromoteToIntended,
 }: OverviewProps) {
   const activeAttrs = attributes.filter(a => a.active)
   const intendedAttrs = activeAttrs.filter(a => a.isIntended)
