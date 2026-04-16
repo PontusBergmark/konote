@@ -33,12 +33,16 @@ function Index() {
   const { isDark, toggle: toggleTheme } = useTheme()
   const { exportView } = useExport()
   const [isScanning, setIsScanning] = useState(false)
+  const [lastScannedAt, setLastScannedAt] = useState<Date | null>(null)
 
   const handleRunScan = () => {
     setIsScanning(true)
     const prompt = `Run a full association scan for ${app.selectedBrand?.name ?? 'brand'} across all tracked prompts and attributes. Return structured results for each attribute showing explicit mention frequency.`
     console.log('[mock scan] sendPrompt:', prompt)
-    setTimeout(() => setIsScanning(false), 2500)
+    setTimeout(() => {
+      setIsScanning(false)
+      setLastScannedAt(new Date())
+    }, 2500)
   }
 
   if (app.showOnboarding) {
@@ -104,6 +108,8 @@ function Index() {
               onNavigate={app.setCurrentView}
               onRunScan={handleRunScan}
               isScanning={isScanning}
+              lastScannedAt={lastScannedAt}
+              hasScanned={lastScannedAt !== null}
             />
           )}
           {app.currentView === 'association-map' && (

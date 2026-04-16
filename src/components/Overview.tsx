@@ -1,7 +1,7 @@
-import type { Brand, Attribute } from '../types'
+import type { Brand, Attribute, ViewId } from '../types'
 import { currentScores, previousScores } from '../data/scores'
-import { calculatePositioningPresence, calculateDelta, getDeltaDirection } from '../utils/scoring'
-import type { ViewId } from '../types'
+import { coOccurrenceData } from '../data/cooccurrence'
+import { calculateDelta, getDeltaDirection } from '../utils/scoring'
 
 interface OverviewProps {
   brands: Brand[]
@@ -10,211 +10,357 @@ interface OverviewProps {
   onNavigate: (view: ViewId) => void
   onRunScan?: () => void
   isScanning?: boolean
+  lastScannedAt?: Date | null
+  hasScanned?: boolean
 }
 
-export function Overview({ brands, selectedBrand, attributes, onNavigate, onRunScan, isScanning }: OverviewProps) {
-  const activeAttrs = attributes.filter(a => a.active)
-  const intendedIds = activeAttrs.filter(a => a.isIntended).map(a => a.id)
+type ValidationStatus = 'strong' | 'moderate' | 'weak' | 'absent'
 
-  // Selected brand data
+function getValidationStatus(score: number): ValidationStatus {
+  if (score >= 65) return 'strong'
+  if (score >= 40) return 'moderate'
+  if (score >= 15) return 'weak'
+  return 'absent'
+}
+
+function statusCopy(status: ValidationStatus, brand: string, attr: string): string {
+  switch (status) {
+    case 'strong': return `LLMs strongly associate ${brand} with ${attr.toLowerCase()}.`
+    case 'moderate': return `LLMs moderately associate ${brand} with ${attr.toLowerCase()}.`
+    case 'weak': return `LLMs weakly associate ${brand} with ${attr.toLowerCase()}.`
+    case 'absent': return `LLMs are not associating ${brand} with ${attr.toLowerCase()}.`
+  }
+}
+
+function statusLabel(status: ValidationStatus): string {
+  return { strong: 'Strong', moderate: 'Moderate', weak: 'Weak', absent: 'Not associated' }[status]
+}
+
+function statusTone(status: ValidationStatus): string {
+  switch (status) {
+    case 'strong': return 'text-primary'
+    case 'moderate': return 'text-foreground'
+    case 'weak': return 'text-muted-foreground'
+    case 'absent': return 'text-muted-foreground'
+  }
+}
+
+function relativeTime(date: Date): string {
+  const diff = Date.now() - date.getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins} min ago`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`
+  const days = Math.floor(hours / 24)
+  return `${days} day${days === 1 ? '' : 's'} ago`
+}
+
+export function Overview({
+  brands,
+  selectedBrand,
+  attributes,
+  onNavigate,
+  onRunScan,
+  isScanning,
+  lastScannedAt,
+  hasScanned = true,
+}: OverviewProps) {
+  const activeAttrs = attributes.filter(a => a.active)
+  const intendedAttrs = activeAttrs.filter(a => a.isIntended)
   const brandScores = currentScores.scores[selectedBrand.id] ?? {}
   const prevBrandScores = previousScores.scores[selectedBrand.id] ?? {}
-  const presence = calculatePositioningPresence(selectedBrand.id, intendedIds, currentScores.scores)
-  const prevPresence = calculatePositioningPresence(selectedBrand.id, intendedIds, previousScores.scores)
-  const presenceDelta = calculateDelta(presence, prevPresence)
-  const presenceDir = getDeltaDirection(presenceDelta)
 
-  // Per-attribute scores for selected brand
-  const attrScores = activeAttrs.map(a => ({
-    attr: a,
-    current: brandScores[a.id] ?? 0,
-    previous: prevBrandScores[a.id] ?? 0,
-    delta: (brandScores[a.id] ?? 0) - (prevBrandScores[a.id] ?? 0),
-  }))
-
-  const strongest = attrScores.reduce((a, b) => a.current > b.current ? a : b, attrScores[0])
-  const weakest = attrScores.reduce((a, b) => a.current < b.current ? a : b, attrScores[0])
-  const biggestGain = attrScores.reduce((a, b) => a.delta > b.delta ? a : b, attrScores[0])
-  const biggestGap = (() => {
-    let worst = { attr: activeAttrs[0], gap: 0 }
-    for (const a of activeAttrs) {
-      const myScore = brandScores[a.id] ?? 0
-      const bestCompetitor = Math.max(
-        ...brands.filter(b => b.id !== selectedBrand.id).map(b => currentScores.scores[b.id]?.[a.id] ?? 0)
-      )
-      const gap = bestCompetitor - myScore
-      if (gap > worst.gap) worst = { attr: a, gap }
-    }
-    return worst
-  })()
-
-  // All brand presences for comparison table
-  const brandPresences = brands.map(b => {
-    const current = calculatePositioningPresence(b.id, intendedIds, currentScores.scores)
-    const prev = calculatePositioningPresence(b.id, intendedIds, previousScores.scores)
-    return { brand: b, current, previous: prev, delta: calculateDelta(current, prev) }
-  })
-
-  return (
-    <div className="p-6 max-w-5xl">
-      {/* Hero: selected brand positioning presence */}
-      <div className="bg-card border border-border rounded-lg p-5 mb-4">
-        <div className="flex items-center gap-3 mb-4">
-          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: selectedBrand.color }} />
-          <h2 className="text-sm font-medium text-foreground">{selectedBrand.name}</h2>
+  // ---- Empty state: no scan yet ----
+  if (!hasScanned) {
+    return (
+      <div className="p-6 max-w-3xl">
+        <p className="text-xs text-muted-foreground mb-1">{selectedBrand.name}</p>
+        <h1 className="text-xl font-semibold text-foreground mb-2 tracking-tight">
+          See what concepts LLMs associate with your brand — and whether they match your positioning.
+        </h1>
+        <div className="bg-card border border-border rounded-lg p-8 mt-6 text-center">
+          <p className="text-sm text-foreground mb-1">No scan data yet.</p>
+          <p className="text-xs text-muted-foreground mb-5">
+            Run a scan to see what LLMs are associating with {selectedBrand.name}.
+          </p>
           {onRunScan && (
             <button
               onClick={onRunScan}
               disabled={isScanning}
-              className="ml-auto text-[11px] font-medium hover:underline disabled:opacity-50"
-              style={{ color: '#6C3EF4' }}
+              className="px-4 py-2 rounded-md text-xs font-medium text-white disabled:opacity-50"
+              style={{ backgroundColor: '#6C3EF4' }}
             >
-              {isScanning ? 'Scanning…' : 'Run scan →'}
+              {isScanning ? 'Scanning…' : 'Run first scan ↗'}
             </button>
           )}
         </div>
+      </div>
+    )
+  }
 
-        <div className="flex items-end gap-2 mb-4">
-          <span className="text-4xl font-semibold text-foreground tracking-tight">{presence}%</span>
-          <span className={`text-sm font-medium mb-1 ${
-            presenceDir === 'positive' ? 'text-primary' : presenceDir === 'negative' ? 'text-destructive' : 'text-muted-foreground'
-          }`}>
-            {presenceDir === 'positive' ? '↑' : presenceDir === 'negative' ? '↓' : '·'} {Math.abs(presenceDelta)}
-          </span>
-          <span className="text-xs text-muted-foreground mb-1.5">positioning presence</span>
-        </div>
+  // ---- Discovered associations: from co-occurrence (Concepts + Categories), excluding ones that match intended attribute names ----
+  const intendedNames = new Set(intendedAttrs.map(a => a.name.toLowerCase()))
+  const coData = coOccurrenceData[selectedBrand.id] ?? []
+  const discovered = coData
+    .filter(c => (c.type === 'Concept' || c.type === 'Category') && c.frequency >= 35)
+    .filter(c => !intendedNames.has(c.entity.toLowerCase()))
+    .sort((a, b) => b.frequency - a.frequency)
+    .slice(0, 5)
 
-        {/* Attribute score bars */}
-        {attrScores.length > 0 && (
-          <div className="grid grid-cols-2 gap-x-6 gap-y-2 mb-4">
-            {attrScores.slice(0, 6).map(as => (
-              <div key={as.attr.id} className="flex items-center gap-2">
-                <span className="text-[11px] text-muted-foreground w-28 truncate">{as.attr.name}</span>
-                <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{ width: `${as.current}%`, backgroundColor: selectedBrand.color }}
-                  />
-                </div>
-                <span className="text-[11px] font-medium text-foreground w-7 text-right">{as.current}</span>
-              </div>
-            ))}
-          </div>
-        )}
+  // Top associations overall (intended + discovered, ranked) — leading "LLMs associate X with:"
+  const topAssociations: Array<{ label: string; score: number; intended: boolean }> = [
+    ...intendedAttrs.map(a => ({
+      label: a.name,
+      score: brandScores[a.id] ?? 0,
+      intended: true,
+    })),
+    ...discovered.map(d => ({ label: d.entity, score: d.frequency, intended: false })),
+  ]
+    .filter(a => a.score >= 15)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5)
 
-        {/* Insight line */}
-        {strongest && weakest && (
-          <p className="text-[11px] text-muted-foreground">
-            Strongest: <span className="font-medium text-foreground">{strongest.attr.name}</span> ({strongest.current})
-            {' · '}Weakest: <span className="font-medium text-foreground">{weakest.attr.name}</span> ({weakest.current})
-            {' · '}
-            <span className={presenceDir === 'positive' ? 'text-primary' : presenceDir === 'negative' ? 'text-destructive' : ''}>
-              {presenceDir === 'positive' ? '+' : ''}{presenceDelta} vs last period
-            </span>
-          </p>
+  // Per-intended attribute validation
+  const intendedResults = intendedAttrs.map(a => {
+    const current = brandScores[a.id] ?? 0
+    const previous = prevBrandScores[a.id] ?? 0
+    const delta = calculateDelta(current, previous)
+    return { attr: a, current, previous, delta, status: getValidationStatus(current) }
+  })
+
+  const landingCount = intendedResults.filter(r => r.status === 'strong' || r.status === 'moderate').length
+  const strongest = intendedResults.length > 0
+    ? intendedResults.reduce((a, b) => (a.current >= b.current ? a : b))
+    : null
+  const biggestGap = intendedResults.length > 0
+    ? intendedResults.reduce((a, b) => (a.current <= b.current ? a : b))
+    : null
+
+  const competitors = brands.filter(b => b.id !== selectedBrand.id)
+  const showComparison = competitors.length > 0
+
+  return (
+    <div className="p-6 max-w-4xl">
+      {/* Persistent framing */}
+      <p className="text-xs text-muted-foreground mb-1">{selectedBrand.name}</p>
+      <h1 className="text-base font-medium text-foreground mb-1 tracking-tight">
+        See what concepts LLMs associate with your brand — and whether they match your positioning.
+      </h1>
+      <div className="flex items-center gap-2 mb-5 text-[11px] text-muted-foreground">
+        {lastScannedAt && <span>Last scanned {relativeTime(lastScannedAt)}</span>}
+        {lastScannedAt && onRunScan && <span>·</span>}
+        {onRunScan && (
+          <button
+            onClick={onRunScan}
+            disabled={isScanning}
+            className="font-medium hover:underline disabled:opacity-50"
+            style={{ color: '#6C3EF4' }}
+          >
+            {isScanning ? 'Scanning…' : 'Re-run scan ↗'}
+          </button>
         )}
       </div>
 
-      {/* Brand-specific metric cards */}
-      <div className="grid grid-cols-4 gap-3 mb-6">
+      {/* HERO: top associations */}
+      <div className="bg-card border border-border rounded-lg p-5 mb-4">
+        <p className="text-xs text-muted-foreground mb-3">LLMs associate {selectedBrand.name} with:</p>
+        {topAssociations.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No meaningful associations surfaced yet. Try running a scan with more prompts.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {topAssociations.map((a, i) => (
+              <span
+                key={`${a.label}-${i}`}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs ${
+                  a.intended
+                    ? 'border border-primary/40 bg-primary/8 text-foreground'
+                    : 'border border-border bg-secondary text-foreground'
+                }`}
+              >
+                <span className="text-[10px] text-muted-foreground tabular-nums">#{i + 1}</span>
+                <span className="font-medium">{a.label}</span>
+                <span className="text-[10px] text-muted-foreground tabular-nums">{Math.round(a.score)}</span>
+                {a.intended && <span className="text-[9px] uppercase tracking-wide text-primary">intended</span>}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Headline cards — only what serves the core question */}
+      <div className="grid grid-cols-3 gap-3 mb-6">
         <div className="bg-card border border-border rounded-lg p-3">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Positioning presence</p>
-          <p className="text-lg font-medium text-foreground mt-0.5">{presence}%</p>
-          <p className={`text-[11px] ${presenceDir === 'positive' ? 'text-primary' : presenceDir === 'negative' ? 'text-destructive' : 'text-muted-foreground'}`}>
-            {presenceDir === 'positive' ? '↑' : presenceDir === 'negative' ? '↓' : '·'} {Math.abs(presenceDelta)} vs prev
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Intended attributes landing</p>
+          <p className="text-lg font-medium text-foreground mt-0.5">
+            {landingCount} <span className="text-sm text-muted-foreground">of {intendedAttrs.length}</span>
           </p>
+          <p className="text-[11px] text-muted-foreground">Strongly or moderately associated</p>
         </div>
         <div className="bg-card border border-border rounded-lg p-3">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Top attribute</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Strongest association</p>
           <p className="text-lg font-medium text-foreground mt-0.5">{strongest?.attr.name ?? '—'}</p>
-          <p className="text-[11px] text-muted-foreground">Score: {strongest?.current ?? 0}</p>
-        </div>
-        <div className="bg-card border border-border rounded-lg p-3">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Biggest gain</p>
-          <p className="text-lg font-medium text-foreground mt-0.5">{biggestGain?.attr.name ?? '—'}</p>
-          <p className="text-[11px] text-primary">+{Math.max(biggestGain?.delta ?? 0, 0)} this period</p>
+          <p className="text-[11px] text-muted-foreground">
+            {strongest ? `${statusLabel(strongest.status)} · ${Math.round(strongest.current)}` : 'No data'}
+          </p>
         </div>
         <div className="bg-card border border-border rounded-lg p-3">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Biggest gap</p>
           <p className="text-lg font-medium text-foreground mt-0.5">{biggestGap?.attr.name ?? '—'}</p>
-          <p className="text-[11px] text-destructive">-{biggestGap?.gap ?? 0} behind leader</p>
+          <p className="text-[11px] text-muted-foreground">
+            {biggestGap ? `${statusLabel(biggestGap.status)} · ${Math.round(biggestGap.current)}` : 'No data'}
+          </p>
         </div>
       </div>
 
-      {/* Competitive comparison table */}
-      <div className="bg-card border border-border rounded-lg p-4 mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-medium text-foreground">How {selectedBrand.name} compares</h3>
-          <button onClick={() => onNavigate('association-map')} className="text-[11px] text-primary hover:underline">
-            View full map →
+      {/* VALIDATE: intended attributes */}
+      <section className="mb-6">
+        <div className="flex items-baseline justify-between mb-2">
+          <h2 className="text-sm font-medium text-foreground">Are your intended associations landing?</h2>
+          <button onClick={() => onNavigate('attributes')} className="text-[11px] text-primary hover:underline">
+            Manage intended attributes →
           </button>
         </div>
-        <div className="space-y-2">
-          {brandPresences.map(bp => {
-            const dir = getDeltaDirection(bp.delta)
-            const isSelected = bp.brand.id === selectedBrand.id
-            const topAttr = (() => {
-              let best = { id: '', score: 0 }
-              for (const attrId of intendedIds) {
-                const s = currentScores.scores[bp.brand.id]?.[attrId] ?? 0
-                if (s > best.score) best = { id: attrId, score: s }
-              }
-              return attributes.find(a => a.id === best.id)?.name ?? '—'
-            })()
-
-            return (
-              <div
-                key={bp.brand.id}
-                className={`flex items-center gap-3 px-2 py-1.5 rounded-md ${isSelected ? 'bg-primary/8' : ''}`}
-              >
-                <div className="flex items-center gap-2 w-24">
-                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: bp.brand.color }} />
-                  <span className={`text-xs ${isSelected ? 'font-medium text-foreground' : 'text-foreground'}`}>{bp.brand.name}</span>
+        {intendedAttrs.length === 0 ? (
+          <div className="bg-card border border-border rounded-lg p-5 text-center">
+            <p className="text-xs text-muted-foreground mb-3">
+              You haven't marked any attributes as intended yet. Mark the attributes you want {selectedBrand.name} to be known for.
+            </p>
+            <button
+              onClick={() => onNavigate('attributes')}
+              className="text-[11px] font-medium text-primary hover:underline"
+            >
+              Set intended attributes →
+            </button>
+          </div>
+        ) : (
+          <div className="bg-card border border-border rounded-lg divide-y divide-border">
+            {intendedResults.map(r => {
+              const dir = getDeltaDirection(r.delta)
+              return (
+                <div key={r.attr.id} className="flex items-center gap-3 px-4 py-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-medium text-foreground truncate">{r.attr.name}</span>
+                      <span className="text-[9px] uppercase tracking-wide text-primary border border-primary/40 px-1.5 py-0.5 rounded">
+                        intended
+                      </span>
+                    </div>
+                    <p className={`text-[11px] ${statusTone(r.status)}`}>
+                      {statusCopy(r.status, selectedBrand.name, r.attr.name)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <div className="w-24 h-1.5 rounded-full bg-secondary overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{ width: `${r.current}%`, backgroundColor: selectedBrand.color }}
+                      />
+                    </div>
+                    <span className="text-xs font-medium text-foreground w-8 text-right tabular-nums">
+                      {Math.round(r.current)}
+                    </span>
+                    <span className={`text-[11px] w-10 text-right tabular-nums ${
+                      dir === 'positive' ? 'text-primary' : dir === 'negative' ? 'text-destructive' : 'text-muted-foreground'
+                    }`}>
+                      {dir === 'positive' ? '↑' : dir === 'negative' ? '↓' : '·'} {Math.abs(r.delta)}
+                    </span>
+                  </div>
                 </div>
-                <svg width="48" height="16" className="flex-shrink-0">
-                  <line
-                    x1="4" y1={16 - bp.previous * 0.14}
-                    x2="44" y2={16 - bp.current * 0.14}
-                    stroke={bp.brand.color}
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                  />
-                  <circle cx="44" cy={16 - bp.current * 0.14} r="2" fill={bp.brand.color} />
-                </svg>
-                <span className="text-sm font-medium text-foreground w-12">{bp.current}%</span>
-                <span className={`text-[11px] w-12 ${dir === 'positive' ? 'text-primary' : dir === 'negative' ? 'text-destructive' : 'text-muted-foreground'}`}>
-                  {dir === 'positive' ? '↑' : dir === 'negative' ? '↓' : '·'} {Math.abs(bp.delta)}
+              )
+            })}
+          </div>
+        )}
+        {intendedResults.some(r => r.status === 'weak' || r.status === 'absent') && (
+          <p className="text-[11px] text-muted-foreground mt-2">
+            Gaps are signals, not failures. {' '}
+            <button onClick={() => onNavigate('prompts')} className="text-primary hover:underline">
+              Review your prompts →
+            </button>
+          </p>
+        )}
+      </section>
+
+      {/* DISCOVER: also associated with */}
+      {discovered.length > 0 && (
+        <section className="mb-6">
+          <div className="flex items-baseline justify-between mb-2">
+            <h2 className="text-sm font-medium text-foreground">Also associated with</h2>
+            <button onClick={() => onNavigate('co-occurrence')} className="text-[11px] text-primary hover:underline">
+              See all co-occurrences →
+            </button>
+          </div>
+          <div className="bg-card border border-dashed border-border rounded-lg p-4">
+            <p className="text-[11px] text-muted-foreground mb-3">
+              Concepts LLMs surfaced that you didn't claim. Signals worth a look — not failures.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {discovered.map(d => (
+                <span
+                  key={d.entity}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border border-border bg-background text-foreground"
+                >
+                  <span className="font-medium">{d.entity}</span>
+                  <span className="text-[10px] text-muted-foreground">{d.type.toLowerCase()}</span>
+                  <span className="text-[10px] text-muted-foreground tabular-nums">{d.frequency}</span>
                 </span>
-                <span className="text-[11px] text-muted-foreground">Top: {topAttr}</span>
-              </div>
-            )
-          })}
-        </div>
-      </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
-      {/* Insight cards */}
-      <div className="grid grid-cols-2 gap-3">
-        <InsightCard
-          title="Attribute scores"
-          body={`${selectedBrand.name} leads in ${strongest?.attr.name ?? '—'} at ${strongest?.current ?? 0}. Weakest area: ${weakest?.attr.name ?? '—'} at ${weakest?.current ?? 0}.`}
-          onNavigate={() => onNavigate('attribute-scores')}
-        />
-        <InsightCard
-          title="Co-occurrence"
-          body={`See which entities LLMs most frequently mention alongside ${selectedBrand.name}.`}
-          onNavigate={() => onNavigate('co-occurrence')}
-        />
-      </div>
-    </div>
-  )
-}
+      {/* Comparison — only when there are competitors */}
+      {showComparison && (
+        <section className="mb-6">
+          <div className="flex items-baseline justify-between mb-2">
+            <h2 className="text-sm font-medium text-foreground">How {selectedBrand.name} compares</h2>
+            <button onClick={() => onNavigate('association-map')} className="text-[11px] text-primary hover:underline">
+              View full map →
+            </button>
+          </div>
+          <div className="bg-card border border-border rounded-lg p-4">
+            <p className="text-[11px] text-muted-foreground mb-3">
+              Average score across {selectedBrand.name}'s intended attributes.
+            </p>
+            <div className="space-y-1.5">
+              {brands.map(b => {
+                const bScores = currentScores.scores[b.id] ?? {}
+                const intendedIds = intendedAttrs.map(a => a.id)
+                const avg = intendedIds.length > 0
+                  ? intendedIds.reduce((acc, id) => acc + (bScores[id] ?? 0), 0) / intendedIds.length
+                  : 0
+                const isSelected = b.id === selectedBrand.id
+                return (
+                  <div
+                    key={b.id}
+                    className={`flex items-center gap-3 px-2 py-1.5 rounded-md ${isSelected ? 'bg-primary/8' : ''}`}
+                  >
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: b.color }} />
+                    <span className={`text-xs w-32 truncate ${isSelected ? 'font-medium' : ''}`}>{b.name}</span>
+                    <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${avg}%`, backgroundColor: b.color }}
+                      />
+                    </div>
+                    <span className="text-xs font-medium text-foreground w-10 text-right tabular-nums">
+                      {Math.round(avg)}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
-function InsightCard({ title, body, onNavigate }: { title: string; body: string; onNavigate: () => void }) {
-  return (
-    <div className="bg-card border border-border rounded-lg p-3">
-      <p className="text-xs font-medium text-foreground mb-1">{title}</p>
-      <p className="text-[11px] text-muted-foreground leading-relaxed mb-2">{body}</p>
-      <button onClick={onNavigate} className="text-[11px] text-primary hover:underline">View details →</button>
+      {/* Methodology note */}
+      <p className="text-[11px] text-muted-foreground">
+        How this is gathered: we run category prompts ("best CRM for SMEs"), brand prompts ("what is {selectedBrand.name} known for"),
+        and competitor-anchored prompts ("alternatives to …") across ChatGPT, Claude and Gemini, then measure how often each concept
+        appears in the responses.
+      </p>
     </div>
   )
 }
