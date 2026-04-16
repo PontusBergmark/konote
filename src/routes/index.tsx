@@ -110,6 +110,21 @@ function Index() {
               isScanning={isScanning}
               lastScannedAt={lastScannedAt}
               hasScanned={lastScannedAt !== null}
+              onPromoteToIntended={(name) => {
+                const id = name.toLowerCase().replace(/\s+/g, '-')
+                if (app.attributes.some(a => a.id === id)) {
+                  app.updateAttribute(id, { isIntended: true, active: true })
+                } else {
+                  app.addAttribute({
+                    id,
+                    name,
+                    description: '',
+                    active: true,
+                    order: app.attributes.length,
+                    isIntended: true,
+                  })
+                }
+              }}
             />
           )}
           {app.currentView === 'association-map' && (

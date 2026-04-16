@@ -12,6 +12,7 @@ interface OverviewProps {
   isScanning?: boolean
   lastScannedAt?: Date | null
   hasScanned?: boolean
+  onPromoteToIntended?: (name: string) => void
 }
 
 type ValidationStatus = 'strong' | 'moderate' | 'weak' | 'absent'
@@ -89,6 +90,7 @@ export function Overview({
   isScanning,
   lastScannedAt,
   hasScanned = true,
+  onPromoteToIntended,
 }: OverviewProps) {
   const activeAttrs = attributes.filter(a => a.active)
   const intendedAttrs = activeAttrs.filter(a => a.isIntended)
@@ -369,21 +371,37 @@ export function Overview({
           </div>
           <div className="bg-card border border-dashed border-border rounded-lg p-4">
             <p className="text-[11px] text-muted-foreground mb-3">
-              Concepts LLMs surfaced that you didn't claim. Signals worth a look — not failures.
+              Concepts LLMs surfaced that you didn't claim. Track any of these as intended to validate them on every scan.
             </p>
             <div className="flex flex-wrap gap-2">
               {discovered.map(d => {
                 const pt = promptTypeForEntity(d.type)
+                const alreadyTracked = attributes.some(a => a.name.toLowerCase() === d.entity.toLowerCase() && a.isIntended)
                 return (
                   <span
                     key={d.entity}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border border-border bg-background text-foreground"
+                    className="inline-flex items-center gap-1.5 pl-2.5 pr-1 py-1 rounded-full text-xs border border-border bg-background text-foreground"
                   >
                     <span className="font-medium">{d.entity}</span>
                     <span className="text-[9px] uppercase tracking-wide text-muted-foreground border border-border rounded px-1 py-px">
                       {pt.label}
                     </span>
                     <span className="text-[10px] text-muted-foreground tabular-nums">{d.frequency}</span>
+                    {onPromoteToIntended && (
+                      alreadyTracked ? (
+                        <span className="text-[9px] uppercase tracking-wide text-primary px-1.5 py-0.5 rounded ml-0.5">
+                          tracked
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => onPromoteToIntended(d.entity)}
+                          title={`Track "${d.entity}" as intended`}
+                          className="ml-0.5 text-[10px] font-medium text-primary border border-primary/40 rounded-full px-1.5 py-0.5 hover:bg-primary/10 transition-colors"
+                        >
+                          + track
+                        </button>
+                      )
+                    )}
                   </span>
                 )
               })}
