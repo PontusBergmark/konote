@@ -403,92 +403,163 @@ export function Onboarding({ onComplete }: OnboardingProps) {
         {step === 3 && (
           <div className="space-y-4">
             <p className="text-xs text-muted-foreground leading-relaxed">
-              These are the questions we ask ChatGPT, Claude and Gemini about your brand — the answers become your association data.
+              We ask LLMs different kinds of questions to surface what they associate with{' '}
+              <span className="font-medium text-foreground">{brandLabel}</span>. Pick which types to track.
             </p>
 
+            {/* Category + segment inputs */}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-[10px] font-medium text-muted-foreground mb-1">Category</label>
+                <input
+                  value={category}
+                  onChange={e => { setCategory(e.target.value); setEditingPrompts(false) }}
+                  placeholder="e.g. CRM"
+                  className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-medium text-muted-foreground mb-1">Segment <span className="text-muted-foreground/60">(optional)</span></label>
+                <input
+                  value={segment}
+                  onChange={e => { setSegment(e.target.value); setEditingPrompts(false) }}
+                  placeholder="e.g. SMEs"
+                  className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+            </div>
+
+            {/* Type toggles, ordered by realism */}
             <div className="space-y-1.5">
-              {resolvedTemplates.map(t => {
-                const active = addedPrompts.some(p => p.text === t.text)
+              {(['category', 'competitor_anchored', 'association_probe'] as PromptType[]).map(t => {
+                const meta = TYPE_META[t]
+                const enabled = enabledTypes[t]
                 return (
                   <button
-                    key={t.type}
-                    onClick={() => handleToggleTemplate(t)}
-                    className={`w-full text-left px-3 py-2.5 text-xs rounded-md border transition-colors ${
-                      active
-                        ? 'bg-primary/10 border-primary text-foreground'
-                        : 'bg-card border-border text-muted-foreground hover:border-primary/50'
+                    key={t}
+                    onClick={() => { setEnabledTypes(prev => ({ ...prev, [t]: !prev[t] })); setEditingPrompts(false) }}
+                    className={`w-full text-left px-3 py-2.5 rounded-md border transition-colors ${
+                      enabled
+                        ? 'bg-primary/10 border-primary'
+                        : 'bg-card border-border hover:border-primary/50'
                     }`}
                   >
-                    <span className="text-[9px] uppercase font-medium tracking-wide text-primary mr-1.5">
-                      {t.label}
-                    </span>
-                    <span className="text-muted-foreground">{t.text}</span>
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center text-[9px] ${enabled ? 'bg-primary border-primary text-primary-foreground' : 'border-border'}`}>
+                        {enabled ? '✓' : ''}
+                      </span>
+                      <span className="text-xs font-medium text-foreground">{meta.label}</span>
+                      <span className="text-[9px] text-muted-foreground">#{meta.rank} most realistic</span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground ml-5.5 pl-0.5">{meta.blurb}</p>
                   </button>
                 )
               })}
             </div>
 
-            <div className="space-y-1.5">
-              <div className="flex gap-1">
-                {(['association_probe', 'competitor_anchored'] as const).map(t => (
-                  <button
-                    key={t}
-                    onClick={() => setCustomType(t)}
-                    className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
-                      customType === t ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'
-                    }`}
-                  >
-                    {t === 'association_probe' ? 'Probe' : 'Anchored'}
-                  </button>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <input
-                  value={customPrompt}
-                  onChange={e => setCustomPrompt(e.target.value)}
-                  placeholder="Write your own prompt…"
-                  onKeyDown={e => e.key === 'Enter' && handleAddCustom()}
-                  className="flex-1 px-3 py-2 text-sm bg-background border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-                <button
-                  onClick={handleAddCustom}
-                  disabled={!customPrompt.trim()}
-                  className="px-3 py-2 text-sm bg-secondary text-secondary-foreground rounded-md hover:opacity-90 disabled:opacity-40"
-                >
-                  Add
-                </button>
-              </div>
-            </div>
-
-            {addedPrompts.filter(p => !resolvedTemplates.some(t => t.text === p.text)).length > 0 && (
+            {/* Generated prompt preview, editable */}
+            {effectiveGenerated.length > 0 && (
               <div className="space-y-1">
-                {addedPrompts
-                  .filter(p => !resolvedTemplates.some(t => t.text === p.text))
-                  .map(p => (
-                    <div key={p.text} className="flex items-center gap-2 bg-card border border-border rounded-md px-3 py-2">
-                      <span className="text-[9px] uppercase font-medium tracking-wide text-primary">
-                        {p.type === 'association_probe' ? 'probe' : 'anchored'}
-                      </span>
-                      <span className="text-xs text-foreground flex-1 truncate">{p.text}</span>
-                      <button
-                        onClick={() => setAddedPrompts(prev => prev.filter(x => x.text !== p.text))}
-                        className="text-muted-foreground hover:text-destructive text-xs"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">We'll ask ({effectiveGenerated.length})</span>
+                  {editingPrompts && (
+                    <button
+                      onClick={() => { setEditingPrompts(false); setGeneratedPrompts([]) }}
+                      className="text-[10px] text-muted-foreground hover:text-foreground"
+                    >
+                      Reset to defaults
+                    </button>
+                  )}
+                </div>
+                {effectiveGenerated.map((p, i) => (
+                  <div key={`${p.type}-${i}`} className="flex items-center gap-1.5 bg-card border border-border rounded-md px-2 py-1.5">
+                    <span className="text-[9px] uppercase font-medium tracking-wide text-primary shrink-0 w-16">
+                      {TYPE_META[p.type].label}
+                    </span>
+                    <input
+                      value={p.text}
+                      onChange={e => updateGenerated(i, e.target.value)}
+                      className="flex-1 px-1.5 py-0.5 text-xs bg-transparent text-foreground focus:outline-none focus:bg-background rounded"
+                    />
+                    <button
+                      onClick={() => removeGenerated(i)}
+                      className="text-muted-foreground hover:text-destructive text-xs shrink-0"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
 
+            {/* Advanced: custom prompts */}
+            <div>
+              <button
+                onClick={() => setShowAdvanced(v => !v)}
+                className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1"
+              >
+                <span>{showAdvanced ? '▾' : '▸'}</span>
+                <span>Advanced — add custom prompts</span>
+              </button>
+              {showAdvanced && (
+                <div className="mt-2 space-y-1.5">
+                  <div className="flex gap-1">
+                    {(['category', 'competitor_anchored', 'association_probe'] as PromptType[]).map(t => (
+                      <button
+                        key={t}
+                        onClick={() => setCustomType(t)}
+                        className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                          customType === t ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'
+                        }`}
+                      >
+                        {TYPE_META[t].label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      value={customPrompt}
+                      onChange={e => setCustomPrompt(e.target.value)}
+                      placeholder="Write your own prompt…"
+                      onKeyDown={e => e.key === 'Enter' && handleAddCustom()}
+                      className="flex-1 px-3 py-2 text-sm bg-background border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                    <button
+                      onClick={handleAddCustom}
+                      disabled={!customPrompt.trim()}
+                      className="px-3 py-2 text-sm bg-secondary text-secondary-foreground rounded-md hover:opacity-90 disabled:opacity-40"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  {customPrompts.length > 0 && (
+                    <div className="space-y-1">
+                      {customPrompts.map((p, i) => (
+                        <div key={`c-${i}`} className="flex items-center gap-1.5 bg-card border border-border rounded-md px-2 py-1.5">
+                          <span className="text-[9px] uppercase font-medium tracking-wide text-primary shrink-0 w-16">
+                            {TYPE_META[p.type].label}
+                          </span>
+                          <span className="text-xs text-foreground flex-1 truncate">{p.text}</span>
+                          <button
+                            onClick={() => setCustomPrompts(prev => prev.filter((_, j) => j !== i))}
+                            className="text-muted-foreground hover:text-destructive text-xs shrink-0"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             <button
-              disabled={addedPrompts.length < 2}
+              disabled={allPrompts.length < 1}
               onClick={() => setStep(4)}
               className="w-full px-4 py-2.5 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
-              {addedPrompts.length < 2
-                ? `Add ${2 - addedPrompts.length} more prompt${addedPrompts.length === 1 ? '' : 's'}`
-                : 'Next →'}
+              {allPrompts.length < 1 ? 'Enable at least one prompt type' : `Next → (${allPrompts.length} prompts)`}
             </button>
           </div>
         )}
