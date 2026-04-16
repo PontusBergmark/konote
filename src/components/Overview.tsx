@@ -266,11 +266,12 @@ export function Overview({
           <p className="text-[11px] text-muted-foreground">Strongly or moderately associated</p>
         </div>
         <div className="bg-card border border-border rounded-lg p-3">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Strongest association</p>
-          <p className="text-lg font-medium text-foreground mt-0.5">{strongest?.attr.name ?? '—'}</p>
-          <p className="text-[11px] text-muted-foreground">
-            {strongest ? `${statusLabel(strongest.status)} · ${Math.round(strongest.current)}` : 'No data'}
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Concepts surfaced</p>
+          <p className="text-lg font-medium text-foreground mt-0.5">
+            {topAssociations.length + Math.max(0, discovered.length - topAssociations.filter(a => !a.intended).length)}
+            <span className="text-sm text-muted-foreground"> this scan</span>
           </p>
+          <p className="text-[11px] text-muted-foreground">{discovered.length} not in your intended set</p>
         </div>
         <div className="bg-card border border-border rounded-lg p-3">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Biggest gap</p>
