@@ -364,16 +364,21 @@ export function Overview({
               Concepts LLMs surfaced that you didn't claim. Signals worth a look — not failures.
             </p>
             <div className="flex flex-wrap gap-2">
-              {discovered.map(d => (
-                <span
-                  key={d.entity}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border border-border bg-background text-foreground"
-                >
-                  <span className="font-medium">{d.entity}</span>
-                  <span className="text-[10px] text-muted-foreground">{d.type.toLowerCase()}</span>
-                  <span className="text-[10px] text-muted-foreground tabular-nums">{d.frequency}</span>
-                </span>
-              ))}
+              {discovered.map(d => {
+                const pt = promptTypeForEntity(d.type)
+                return (
+                  <span
+                    key={d.entity}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border border-border bg-background text-foreground"
+                  >
+                    <span className="font-medium">{d.entity}</span>
+                    <span className="text-[9px] uppercase tracking-wide text-muted-foreground border border-border rounded px-1 py-px">
+                      {pt.label}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground tabular-nums">{d.frequency}</span>
+                  </span>
+                )
+              })}
             </div>
           </div>
         </section>
