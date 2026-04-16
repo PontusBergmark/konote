@@ -199,8 +199,19 @@ export function Overview({
       <div className="bg-card border border-border rounded-lg overflow-hidden mb-4">
         {topAssociations.length === 0 ? (
           <div className="p-6">
-            <p className="text-xs text-muted-foreground mb-2">LLMs associate {selectedBrand.name} with</p>
-            <p className="text-sm text-muted-foreground">No meaningful associations surfaced yet. Try running a scan with more prompts.</p>
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-2">
+              LLMs associate {selectedBrand.name} with
+            </p>
+            <p className="text-sm text-foreground mb-1">Not enough signal yet.</p>
+            <p className="text-xs text-muted-foreground mb-3">
+              No concept passed the threshold. This usually means too few prompts, or prompts that don't surface {selectedBrand.name} naturally.
+            </p>
+            <button
+              onClick={() => onNavigate('prompts')}
+              className="text-[11px] font-medium text-primary hover:underline"
+            >
+              Add more prompts →
+            </button>
           </div>
         ) : (
           <>
