@@ -56,6 +56,30 @@ function relativeTime(date: Date): string {
   return `${days} day${days === 1 ? '' : 's'} ago`
 }
 
+type Freshness = 'fresh' | 'aging' | 'stale'
+function getFreshness(date: Date): Freshness {
+  const hours = (Date.now() - date.getTime()) / 3_600_000
+  if (hours < 24) return 'fresh'
+  if (hours < 24 * 7) return 'aging'
+  return 'stale'
+}
+function freshnessTone(f: Freshness): { dot: string; text: string; label: string } {
+  switch (f) {
+    case 'fresh': return { dot: 'bg-emerald-500', text: 'text-emerald-600 dark:text-emerald-400', label: 'Fresh' }
+    case 'aging': return { dot: 'bg-amber-500', text: 'text-amber-600 dark:text-amber-400', label: 'Aging' }
+    case 'stale': return { dot: 'bg-destructive', text: 'text-destructive', label: 'Stale' }
+  }
+}
+
+// Heuristic: map co-occurrence entity type → likely surfacing prompt type
+function promptTypeForEntity(type: string): { label: string; tone: string } {
+  switch (type) {
+    case 'Category': return { label: 'category', tone: 'text-foreground' }
+    case 'Competitor': return { label: 'competitor', tone: 'text-foreground' }
+    default: return { label: 'brand', tone: 'text-muted-foreground' }
+  }
+}
+
 export function Overview({
   brands,
   selectedBrand,
