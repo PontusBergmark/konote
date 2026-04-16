@@ -108,6 +108,8 @@ function Index() {
               onNavigate={app.setCurrentView}
               onRunScan={handleRunScan}
               isScanning={isScanning}
+              lastScannedAt={lastScannedAt}
+              hasScanned={lastScannedAt !== null}
             />
           )}
           {app.currentView === 'association-map' && (
