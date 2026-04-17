@@ -33,6 +33,12 @@ export const Route = createRootRoute({
       { name: "description", content: "Track whether your brand positioning shows up in LLM outputs. Based on Ulli Applebaum's brand association framework." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { property: "og:title", content: "LLM Perception Tracker" },
+      { name: "twitter:title", content: "LLM Perception Tracker" },
+      { property: "og:description", content: "Track whether your brand positioning shows up in LLM outputs. Based on Ulli Applebaum's brand association framework." },
+      { name: "twitter:description", content: "Track whether your brand positioning shows up in LLM outputs. Based on Ulli Applebaum's brand association framework." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/2c52ad9b-1b8a-401f-9b31-e0dcb974f267/id-preview-f122b2a6--d6e8f4a1-7e2f-4372-b50e-d7792ba828b7.lovable.app-1776456382697.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/2c52ad9b-1b8a-401f-9b31-e0dcb974f267/id-preview-f122b2a6--d6e8f4a1-7e2f-4372-b50e-d7792ba828b7.lovable.app-1776456382697.png" },
     ],
     links: [
       {
