@@ -213,6 +213,28 @@ function ProductDemo() {
     .filter((c) => c.type === "Concept" || c.type === "Category")
     .slice(0, 4);
 
+  const [phase, setPhase] = useState<"idle" | "scanning" | "done">("idle");
+  const [revealed, setRevealed] = useState(0); // count of co-occurrence pills shown
+  const [scannedAt, setScannedAt] = useState<string>("3 min ago");
+
+  const runScan = () => {
+    if (phase === "scanning") return;
+    setPhase("scanning");
+    setRevealed(0);
+    // stagger reveal of "also associated with" pills
+    co.forEach((_, i) => {
+      setTimeout(() => setRevealed((r) => Math.max(r, i + 1)), 900 + i * 220);
+    });
+    setTimeout(() => {
+      setPhase("done");
+      setScannedAt("just now");
+    }, 900 + co.length * 220 + 200);
+  };
+
+  const showScores = phase !== "idle";
+  const pillsShown = phase === "idle" ? co.length : revealed;
+  const isScanning = phase === "scanning";
+
   function statusOf(score: number) {
     if (score >= 65) return { label: "Strong", tone: "text-primary" };
     if (score >= 40) return { label: "Moderate", tone: "text-foreground" };
