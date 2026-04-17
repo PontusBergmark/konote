@@ -62,7 +62,7 @@ function SiteHeader() {
           to="/app"
           className="inline-flex h-8 items-center rounded-md bg-foreground px-3 text-xs font-medium text-background transition-opacity hover:opacity-90"
         >
-          Open app
+          See it for your brand →
         </Link>
       </div>
     </header>
@@ -88,11 +88,7 @@ function Hero() {
     <section className="border-b border-border">
       <div className="mx-auto max-w-6xl px-6 pt-20 pb-16 md:pt-28 md:pb-24">
         <div className="max-w-3xl">
-          <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-[11px] text-muted-foreground">
-            <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ backgroundColor: "var(--primary)" }} />
-            New: brand association tracking for LLMs
-          </span>
-          <h1 className="mt-5 text-4xl font-semibold tracking-tight md:text-6xl">
+          <h1 className="text-4xl font-semibold tracking-tight md:text-6xl">
             How are LLMs positioning your brand?
           </h1>
           <p className="mt-5 max-w-2xl text-base text-muted-foreground md:text-lg">
@@ -529,7 +525,7 @@ function FinalCTA() {
           to="/app"
           className="mt-8 inline-flex h-12 items-center rounded-md bg-foreground px-6 text-sm font-medium text-background transition-opacity hover:opacity-90"
         >
-          Open app →
+          See it for your brand →
         </Link>
       </div>
     </section>
