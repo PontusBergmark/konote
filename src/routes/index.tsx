@@ -101,12 +101,9 @@ function Hero() {
             >
               See it for your brand →
             </Link>
-            <a
-              href="#demo"
-              className="inline-flex h-11 items-center rounded-md border border-border px-5 text-sm font-medium hover:bg-secondary"
-            >
-              Watch the demo
-            </a>
+            <span className="text-xs text-muted-foreground">
+              Free to try · no card required
+            </span>
           </div>
           <p className="mt-5 text-xs text-muted-foreground">
             Tracks <span className="text-foreground">ChatGPT</span> · <span className="text-foreground">Claude</span>
@@ -527,7 +524,7 @@ function FAQ() {
     },
     {
       q: "Is there a free plan?",
-      a: "Yes. Run a limited number of queries to see how it works before committing.",
+      a: "Dang right there is. Run a meaningful number of queries on the house — no card, no trial timer. Upgrade only when you actually need more.",
     },
   ];
   return (
@@ -569,6 +566,7 @@ function FinalCTA() {
         >
           See it for your brand →
         </Link>
+        <p className="mt-3 text-xs text-muted-foreground">Free to try · no card required</p>
       </div>
     </section>
   );
