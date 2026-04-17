@@ -359,21 +359,54 @@ function HowItWorks() {
   ];
   return (
     <section id="how-it-works" className="border-b border-border">
-      <div className="mx-auto max-w-6xl px-6 py-20 md:py-28">
+      <div className="mx-auto max-w-5xl px-6 py-20 md:py-28">
         <div className="max-w-2xl">
           <p className="text-xs font-medium uppercase tracking-wide text-primary">How it works</p>
           <h2 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">
             Three steps to see what LLMs say about you.
           </h2>
         </div>
-        <div className="mt-12 grid gap-6 md:grid-cols-3">
-          {steps.map((s) => (
-            <div key={s.n} className="rounded-xl border border-border bg-card p-6">
-              <span className="font-mono text-xs text-muted-foreground">{s.n}</span>
-              <h3 className="mt-3 text-lg font-semibold tracking-tight">{s.title}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">{s.body}</p>
-            </div>
-          ))}
+
+        {/* Stepper card — mirrors the in-app onboarding */}
+        <div className="mt-12 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+          {/* Window chrome */}
+          <div className="flex items-center gap-1.5 border-b border-border bg-secondary/40 px-4 py-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-muted-foreground/30" />
+            <span className="h-2.5 w-2.5 rounded-full bg-muted-foreground/30" />
+            <span className="h-2.5 w-2.5 rounded-full bg-muted-foreground/30" />
+            <span className="ml-3 text-[11px] text-muted-foreground">konote.app · onboarding</span>
+          </div>
+
+          <div className="grid gap-0 md:grid-cols-3">
+            {steps.map((s, i) => (
+              <div
+                key={s.n}
+                className={`p-6 ${i < steps.length - 1 ? "border-b border-border md:border-b-0 md:border-r" : ""}`}
+              >
+                {/* Compact stepper — matches Onboarding.tsx visual */}
+                <div className="mb-4">
+                  <div className="mb-2 flex items-center gap-1.5">
+                    {steps.map((_, j) => (
+                      <div
+                        key={j}
+                        className={`h-1 flex-1 rounded-full ${
+                          j < i ? "bg-primary" : j === i ? "bg-primary/60" : "bg-border"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] font-medium text-foreground">{s.title}</p>
+                    <p className="text-[10px] tabular-nums text-muted-foreground">
+                      Step {i + 1} of {steps.length}
+                    </p>
+                  </div>
+                </div>
+
+                <p className="text-sm text-muted-foreground">{s.body}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
