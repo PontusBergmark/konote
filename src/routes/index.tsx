@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { brands } from "../data/brands";
 import { attributes as allAttributes } from "../data/attributes";
@@ -213,6 +214,28 @@ function ProductDemo() {
     .filter((c) => c.type === "Concept" || c.type === "Category")
     .slice(0, 4);
 
+  const [phase, setPhase] = useState<"idle" | "scanning" | "done">("idle");
+  const [revealed, setRevealed] = useState(0); // count of co-occurrence pills shown
+  const [scannedAt, setScannedAt] = useState<string>("3 min ago");
+
+  const runScan = () => {
+    if (phase === "scanning") return;
+    setPhase("scanning");
+    setRevealed(0);
+    // stagger reveal of "also associated with" pills
+    co.forEach((_, i) => {
+      setTimeout(() => setRevealed((r) => Math.max(r, i + 1)), 900 + i * 220);
+    });
+    setTimeout(() => {
+      setPhase("done");
+      setScannedAt("just now");
+    }, 900 + co.length * 220 + 200);
+  };
+
+  const showScores = phase !== "idle";
+  const pillsShown = phase === "idle" ? co.length : revealed;
+  const isScanning = phase === "scanning";
+
   function statusOf(score: number) {
     if (score >= 65) return { label: "Strong", tone: "text-primary" };
     if (score >= 40) return { label: "Moderate", tone: "text-foreground" };
@@ -234,13 +257,41 @@ function ProductDemo() {
         </div>
 
         <div className="mt-12 overflow-hidden rounded-xl border border-border bg-card shadow-lg">
-          <div className="flex items-center justify-between border-b border-border bg-background/40 px-4 py-2.5">
+          <div className="flex items-center justify-between gap-3 border-b border-border bg-background/40 px-4 py-2.5">
             <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              <span className="text-emerald-600 dark:text-emerald-400">Fresh</span>
-              <span>· {brand.name} · scanned 3 min ago</span>
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  isScanning ? "bg-amber-500 animate-pulse" : "bg-emerald-500"
+                }`}
+              />
+              <span
+                className={
+                  isScanning
+                    ? "text-amber-600 dark:text-amber-400"
+                    : "text-emerald-600 dark:text-emerald-400"
+                }
+              >
+                {isScanning ? "Scanning…" : "Fresh"}
+              </span>
+              <span>· {brand.name} · scanned {scannedAt}</span>
             </div>
-            <span className="text-[11px] text-muted-foreground">Sample data</span>
+            <button
+              type="button"
+              onClick={runScan}
+              disabled={isScanning}
+              className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-primary/20 disabled:opacity-60"
+            >
+              {isScanning ? (
+                <>
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
+                  Running…
+                </>
+              ) : phase === "done" ? (
+                "Run again"
+              ) : (
+                "▶ Run analysis"
+              )}
+            </button>
           </div>
 
           <div className="grid gap-0 md:grid-cols-2">
@@ -250,6 +301,7 @@ function ProductDemo() {
               <div className="mt-4 divide-y divide-border">
                 {intended.map((a) => {
                   const s = statusOf(a.score);
+                  const displayScore = showScores ? a.score : 0;
                   return (
                     <div key={a.id} className="flex items-center gap-3 py-3">
                       <div className="min-w-0 flex-1">
@@ -259,17 +311,19 @@ function ProductDemo() {
                             intended
                           </span>
                         </div>
-                        <p className={`mt-0.5 text-[11px] ${s.tone}`}>
-                          {s.label} association
+                        <p className={`mt-0.5 text-[11px] ${showScores ? s.tone : "text-muted-foreground"}`}>
+                          {showScores ? `${s.label} association` : isScanning ? "Analyzing…" : "Click Run analysis"}
                         </p>
                       </div>
                       <div className="h-1.5 w-24 overflow-hidden rounded-full bg-secondary">
                         <div
-                          className="h-full rounded-full"
-                          style={{ width: `${a.score}%`, backgroundColor: brand.color }}
+                          className="h-full rounded-full transition-all duration-1000 ease-out"
+                          style={{ width: `${displayScore}%`, backgroundColor: brand.color }}
                         />
                       </div>
-                      <span className="w-8 text-right text-xs font-medium tabular-nums">{a.score}</span>
+                      <span className="w-8 text-right text-xs font-medium tabular-nums">
+                        {displayScore}
+                      </span>
                     </div>
                   );
                 })}
@@ -282,11 +336,11 @@ function ProductDemo() {
               <p className="mt-1 text-[11px] text-muted-foreground">
                 Concepts LLMs surfaced that you didn't claim.
               </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {co.map((c) => (
+              <div className="mt-4 flex min-h-[2rem] flex-wrap gap-2">
+                {co.slice(0, pillsShown).map((c) => (
                   <span
                     key={c.entity}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs"
+                    className="inline-flex animate-fade-in items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs"
                   >
                     <span className="font-medium">{c.entity}</span>
                     <span className="rounded border border-border px-1 py-px text-[9px] uppercase tracking-wide text-muted-foreground">
@@ -294,6 +348,11 @@ function ProductDemo() {
                     </span>
                   </span>
                 ))}
+                {pillsShown === 0 && (
+                  <span className="text-[11px] text-muted-foreground">
+                    {isScanning ? "Surfacing concepts…" : "—"}
+                  </span>
+                )}
               </div>
 
               <h3 className="mt-7 text-sm font-medium">Competitors in your space</h3>
