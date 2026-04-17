@@ -304,7 +304,7 @@ function ProductDemo() {
                 {brands
                   .filter((b) => b.id !== brand.id)
                   .slice(0, 3)
-                  .map((b) => (
+                  .map((b, i) => (
                     <div
                       key={b.id}
                       className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-2"
@@ -317,7 +317,7 @@ function ProductDemo() {
                         <span className="text-xs font-medium">{b.name}</span>
                       </div>
                       <span className="text-[11px] text-muted-foreground">
-                        Overlap on {Math.floor(2 + Math.random() * 2)} attributes
+                        Overlap on {[3, 2, 3][i]} attributes
                       </span>
                     </div>
                   ))}
@@ -435,26 +435,35 @@ function FeatureGrid() {
   ];
   return (
     <section className="border-b border-border">
-      <div className="mx-auto max-w-6xl px-6 py-20 md:py-28">
-        <div className="max-w-2xl">
+      <div className="mx-auto grid max-w-6xl gap-12 px-6 py-20 md:grid-cols-[1fr_1.4fr] md:py-28">
+        <div>
           <p className="text-xs font-medium uppercase tracking-wide text-primary">What you can measure</p>
           <h2 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">
             Five questions Konote answers.
           </h2>
+          <p className="mt-4 text-sm text-muted-foreground">
+            Each one is a structured read on how LLMs are framing your brand right now.
+          </p>
         </div>
-        <ul className="mt-12 grid gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-2">
+        <ul className="divide-y divide-border border-y border-border">
           {features.map((f, i) => (
-            <li
-              key={i}
-              className="flex items-start gap-3 bg-card p-6"
-            >
-              <span
-                className="mt-1 inline-flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-medium text-primary-foreground"
-                style={{ backgroundColor: "var(--primary)" }}
-              >
-                {i + 1}
+            <li key={i} className="flex items-start gap-4 py-5">
+              <span className="mt-0.5 font-mono text-xs tabular-nums text-muted-foreground">
+                {String(i + 1).padStart(2, "0")}
               </span>
-              <p className="text-sm">{f}</p>
+              <p className="flex-1 text-base">{f}</p>
+              <svg
+                className="mt-1 h-4 w-4 flex-shrink-0 text-primary"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M3 8l3.5 3.5L13 5" />
+              </svg>
             </li>
           ))}
         </ul>
