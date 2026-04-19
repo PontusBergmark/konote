@@ -1,17 +1,28 @@
 import { useState } from 'react'
 import type { Brand } from '../types'
 
+export type ScanMode = 'quick' | 'full'
+
+export const SCAN_MODES: Record<ScanMode, { label: string; prompts: number; seconds: number; durationMs: number }> = {
+  quick: { label: 'Quick scan', prompts: 9, seconds: 15, durationMs: 15000 },
+  full: { label: 'Full scan', prompts: 15, seconds: 25, durationMs: 25000 },
+}
+
 interface TopBarProps {
   brands: Brand[]
   selectedBrand: Brand
   onBrandChange: (id: string) => void
   onExport: () => void
-  onRunScan: () => void
+  onRunScan: (mode: ScanMode) => void
   isScanning?: boolean
+  scanMode: ScanMode
+  onScanModeChange: (mode: ScanMode) => void
 }
 
-export function TopBar({ brands, selectedBrand, onBrandChange, onExport, onRunScan, isScanning }: TopBarProps) {
+export function TopBar({ brands, selectedBrand, onBrandChange, onExport, onRunScan, isScanning, scanMode, onScanModeChange }: TopBarProps) {
   const [open, setOpen] = useState(false)
+  const [scanMenuOpen, setScanMenuOpen] = useState(false)
+  const mode = SCAN_MODES[scanMode]
 
   return (
     <div className="h-11 min-h-[44px] border-b flex items-center justify-between px-4" style={{ borderBottomWidth: '0.5px' }}>
