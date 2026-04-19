@@ -1,12 +1,10 @@
 import type { ViewId } from '../types'
-import type { UsageState } from '../types'
 
 interface SidebarProps {
   currentView: ViewId
   onViewChange: (view: ViewId) => void
   searchQuery: string
   onSearchChange: (q: string) => void
-  usage: UsageState
   isDark: boolean
   onToggleTheme: () => void
 }
