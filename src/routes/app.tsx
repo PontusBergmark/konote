@@ -96,8 +96,10 @@ function AppPage() {
           onExport={handleExport}
           onRunScan={handleRunScan}
           isScanning={isScanning}
+          scanMode={scanMode}
+          onScanModeChange={setScanMode}
         />
-        <ScanProgressBar isScanning={isScanning} durationMs={2500} />
+        <ScanProgressBar isScanning={isScanning} durationMs={activeScanDuration} />
         <SummaryBar
           selectedBrand={app.selectedBrand}
           attributes={app.attributes}
