@@ -14,7 +14,7 @@ import { Settings } from '../components/Settings'
 import { Onboarding } from '../components/Onboarding'
 import { ScanProgressBar } from '../components/ScanProgressBar'
 import { useAppState } from '../hooks/useAppState'
-import { useUsage } from '../hooks/useUsage'
+
 import { useTheme } from '../hooks/useTheme'
 import { useExport } from '../hooks/useExport'
 
