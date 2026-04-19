@@ -151,8 +151,6 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     })
   }
 
-  const PROMPT_CAP = 15
-
   const handleAddCustom = () => {
     if (!customPrompt.trim()) return
     if (allPrompts.length >= PROMPT_CAP) return
