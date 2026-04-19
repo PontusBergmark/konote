@@ -65,15 +65,19 @@ function AppPage() {
   }
 
   const handleAddAttributeFromProbe = (name: string) => {
+    const id = name.toLowerCase().replace(/\s+/g, '-')
+    if (app.attributes.some(a => a.id === id)) {
+      app.updateAttribute(id, { isIntended: true, active: true })
+      return
+    }
     app.addAttribute({
-      id: name.toLowerCase().replace(/\s+/g, '-'),
+      id,
       name,
       description: '',
       active: app.attributes.filter(a => a.active).length < 12,
       order: app.attributes.length,
       isIntended: true,
     })
-    app.setCurrentView('attributes')
   }
 
   const handleExport = () => {
