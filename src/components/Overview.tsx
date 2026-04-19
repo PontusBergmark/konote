@@ -151,9 +151,7 @@ export function Overview({
   // Per-intended attribute validation
   const intendedResults = intendedAttrs.map(a => {
     const current = brandScores[a.id] ?? 0
-    const previous = prevBrandScores[a.id] ?? 0
-    const delta = calculateDelta(current, previous)
-    return { attr: a, current, previous, delta, status: getValidationStatus(current) }
+    return { attr: a, current, status: getValidationStatus(current) }
   })
 
   const landingCount = intendedResults.filter(r => r.status === 'strong' || r.status === 'moderate').length
