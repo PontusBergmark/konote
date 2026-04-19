@@ -1,6 +1,5 @@
 import type { ViewId } from '../types'
 import type { UsageState } from '../types'
-import { PLANS } from '../config/plan'
 
 interface SidebarProps {
   currentView: ViewId
