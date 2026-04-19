@@ -170,7 +170,6 @@ function AppPage() {
               onRemoveBrand={app.removeBrand}
               enabledModels={app.enabledModels}
               onToggleModel={app.toggleModel}
-              currentTier={usage.currentTier}
               onResetOnboarding={app.resetToOnboarding}
             />
           )}
