@@ -38,6 +38,43 @@ export function AssociationMap({ brands, attributes }: AssociationMapProps) {
   const detailAttr = detailAttrId ? attributes.find(a => a.id === detailAttrId) : null
   const sovData = detailAttrId ? calculateShareOfVoice(detailAttrId, currentScores.scores) : {}
 
+  // ---- Auto-generated summary: highest and lowest non-zero cells in the visible grid ----
+  type Cell = { brand: Brand; attr: Attribute; score: number }
+  const cells: Cell[] = []
+  for (const brand of brands) {
+    for (const attr of visibleAttrs) {
+      const score = currentScores.scores[brand.id]?.[attr.id] ?? 0
+      cells.push({ brand, attr, score })
+    }
+  }
+
+  let summary: string | null = null
+  if (cells.length > 0 && brands.length > 1) {
+    const highest = cells.reduce((a, b) => (b.score > a.score ? b : a))
+    // Find the attribute where the leader brand is most clearly behind the best on that attribute
+    const leader = highest.brand
+    let biggestGap: { attr: Attribute; leaderScore: number; winner: Brand; winnerScore: number } | null = null
+    for (const attr of visibleAttrs) {
+      const leaderScore = currentScores.scores[leader.id]?.[attr.id] ?? 0
+      const ranked = brands
+        .map(b => ({ brand: b, score: currentScores.scores[b.id]?.[attr.id] ?? 0 }))
+        .sort((a, b) => b.score - a.score)
+      const winner = ranked[0]
+      if (winner.brand.id === leader.id) continue
+      const gap = winner.score - leaderScore
+      if (!biggestGap || gap > biggestGap.winnerScore - biggestGap.leaderScore) {
+        biggestGap = { attr, leaderScore, winner: winner.brand, winnerScore: winner.score }
+      }
+    }
+    if (highest.score > 0) {
+      if (biggestGap && biggestGap.winnerScore - biggestGap.leaderScore >= 10) {
+        summary = `${leader.name} leads on ${highest.attr.name.toLowerCase()} but loses ${biggestGap.attr.name.toLowerCase()} to ${biggestGap.winner.name}.`
+      } else {
+        summary = `${leader.name} leads the grid, anchored by ${highest.attr.name.toLowerCase()}.`
+      }
+    }
+  }
+
   return (
     <div className="p-6 relative">
       <div className="flex items-center justify-between mb-4">
@@ -86,8 +123,10 @@ export function AssociationMap({ brands, attributes }: AssociationMapProps) {
                 </td>
                 {visibleAttrs.map(attr => {
                   const score = currentScores.scores[brand.id]?.[attr.id] ?? 0
-                  const pct = score / maxScore
-                  const bg = `color-mix(in oklch, var(--heatmap-high) ${Math.round(pct * 100)}%, var(--heatmap-low))`
+                  const pct = Math.max(0, Math.min(1, score / maxScore))
+                  // Proportional alpha on a saturated teal — near-zero scores render almost white
+                  const alphaPct = Math.round(pct * 100)
+                  const bg = `color-mix(in oklch, var(--heatmap-base) ${alphaPct}%, transparent)`
                   const models = modelScores[brand.id]?.[attr.id] ?? {}
 
                   return (
@@ -95,7 +134,7 @@ export function AssociationMap({ brands, attributes }: AssociationMapProps) {
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
                           <div className="h-5 rounded-sm flex-1 max-w-[80px] relative" style={{ backgroundColor: bg }}>
-                            <div className="absolute inset-0 flex items-center justify-center text-[10px] font-medium" style={{ color: pct > 0.5 ? 'white' : 'var(--color-foreground)' }}>
+                            <div className="absolute inset-0 flex items-center justify-center text-[10px] font-medium" style={{ color: pct > 0.6 ? 'white' : 'var(--color-foreground)' }}>
                               {score}
                             </div>
                           </div>
@@ -120,6 +159,13 @@ export function AssociationMap({ brands, attributes }: AssociationMapProps) {
           </tbody>
         </table>
       </div>
+
+      {summary && (
+        <p className="mt-3 text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">Key finding · </span>
+          {summary}
+        </p>
+      )}
 
       {/* Attribute detail slide-out */}
       {detailAttr && (
