@@ -599,26 +599,36 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 {(Object.keys(SCAN_MODES) as ScanMode[]).map(m => {
                   const sm = SCAN_MODES[m]
                   const selected = scanMode === m
+                  const insufficient = allPrompts.length < sm.prompts
                   return (
                     <button
                       key={m}
                       onClick={() => setScanMode(m)}
                       className={`px-3 py-2 rounded-md border text-left transition-colors ${
                         selected ? 'bg-primary/10 border-primary' : 'bg-card border-border hover:border-primary/50'
-                      }`}
+                      } ${insufficient ? 'opacity-60' : ''}`}
                     >
                       <p className="text-xs font-medium text-foreground">{sm.label}</p>
                       <p className="text-[10px] text-muted-foreground">{sm.prompts} prompts · ~{sm.seconds} sec</p>
+                      {insufficient && (
+                        <p className="text-[10px] text-destructive mt-0.5">Need {sm.prompts - allPrompts.length} more</p>
+                      )}
                     </button>
                   )
                 })}
               </div>
+              {allPrompts.length < SCAN_MODES[scanMode].prompts && (
+                <p className="text-[11px] text-destructive text-left mt-2">
+                  {SCAN_MODES[scanMode].label} needs {SCAN_MODES[scanMode].prompts} prompts — you have {allPrompts.length}. Go back and add {SCAN_MODES[scanMode].prompts - allPrompts.length} more, or pick Quick scan.
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
               <button
                 onClick={() => buildData(true)}
-                className="w-full px-6 py-3 text-sm font-semibold text-white rounded-lg hover:opacity-90 transition-opacity"
+                disabled={allPrompts.length < SCAN_MODES[scanMode].prompts}
+                className="w-full px-6 py-3 text-sm font-semibold text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{ backgroundColor: '#6C3EF4' }}
               >
                 Run {SCAN_MODES[scanMode].label.toLowerCase()} ↗
