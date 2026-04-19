@@ -160,6 +160,13 @@ export function AssociationMap({ brands, attributes }: AssociationMapProps) {
         </table>
       </div>
 
+      {summary && (
+        <p className="mt-3 text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">Key finding · </span>
+          {summary}
+        </p>
+      )}
+
       {/* Attribute detail slide-out */}
       {detailAttr && (
         <div className="fixed top-0 right-0 h-full w-[320px] bg-card border-l border-border shadow-lg z-50 flex flex-col">
