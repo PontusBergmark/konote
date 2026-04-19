@@ -583,7 +583,7 @@ function FAQ() {
     },
     {
       q: "Is there a free plan?",
-      a: "Dang right there is. Run a meaningful number of queries on the house — no card, no trial timer. Upgrade only when you actually need more.",
+      a: "Dang right there is — the whole thing is free. No card, no trial timer, no scan limits.",
     },
   ];
   return (
