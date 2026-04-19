@@ -524,7 +524,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     />
                     <button
                       onClick={handleAddCustom}
-                      disabled={!customPrompt.trim()}
+                      disabled={!customPrompt.trim() || atCap}
                       className="px-3 py-2 text-sm bg-secondary text-secondary-foreground rounded-md hover:opacity-90 disabled:opacity-40"
                     >
                       Add
