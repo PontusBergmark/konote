@@ -153,8 +153,6 @@ function AppPage() {
               searchQuery={app.searchQuery}
               onAdd={app.addPrompt}
               onRemove={app.removePrompt}
-              maxPrompts={plan.maxPrompts}
-              currentTier={usage.currentTier}
             />
           )}
           {app.currentView === 'attributes' && (
