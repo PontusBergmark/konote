@@ -552,6 +552,9 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               )}
             </div>
 
+            <p className="text-[10px] text-muted-foreground text-center">
+              {allPrompts.length} of {PROMPT_CAP} prompts{atCap ? ' · cap reached' : ''}
+            </p>
             <button
               disabled={allPrompts.length < 1}
               onClick={() => setStep(4)}
