@@ -195,7 +195,24 @@ export function Overview({
             {isScanning ? 'Scanning…' : 'Re-run scan ↗'}
           </button>
         )}
+        <button
+          onClick={() => setShowSnapshot(true)}
+          className="ml-auto px-2.5 py-1 text-[11px] font-medium border border-border rounded-md text-foreground hover:bg-accent transition-colors"
+        >
+          Share snapshot ↗
+        </button>
       </div>
+
+      {showSnapshot && (
+        <ShareSnapshot
+          brand={selectedBrand}
+          scannedAt={lastScannedAt ?? null}
+          topAssociations={topAssociations}
+          intendedLanding={{ landing: landingCount, total: intendedAttrs.length }}
+          biggestGap={biggestGap ? { name: biggestGap.attr.name, score: biggestGap.current } : null}
+          onClose={() => setShowSnapshot(false)}
+        />
+      )}
 
       {/* HERO: ranked associations */}
       <div className="bg-card border border-border rounded-lg overflow-hidden mb-4">
