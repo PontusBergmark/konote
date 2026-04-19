@@ -1,17 +1,18 @@
 import { useState } from 'react'
-import type { Brand } from '../types'
+import type { Brand, Attribute } from '../types'
 import { positioningProbeResults } from '../data/positioning'
 import { AssociationPill } from './AssociationPill'
 import { ScanProgressBar } from './ScanProgressBar'
 
 interface PositioningProbeProps {
   brands: Brand[]
+  attributes: Attribute[]
   onAddAttribute: (name: string) => void
 }
 
 const PROBE_DURATION_MS = 8000
 
-export function PositioningProbe({ brands, onAddAttribute }: PositioningProbeProps) {
+export function PositioningProbe({ brands, attributes, onAddAttribute }: PositioningProbeProps) {
   const [primaryBrandId, setPrimaryBrandId] = useState(brands[0]?.id ?? '')
   const [selectedCompetitors, setSelectedCompetitors] = useState<string[]>(
     brands.filter(b => b.id !== (brands[0]?.id ?? '')).map(b => b.id)
