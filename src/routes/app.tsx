@@ -30,7 +30,6 @@ export const Route = createFileRoute("/app")({
 
 function AppPage() {
   const app = useAppState()
-  const { usage, plan } = useUsage()
   const { isDark, toggle: toggleTheme } = useTheme()
   const { exportView } = useExport()
   const [isScanning, setIsScanning] = useState(false)
