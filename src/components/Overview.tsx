@@ -453,7 +453,7 @@ export function Overview({
       {/* Methodology note */}
       <p className="text-[11px] text-muted-foreground">
         How this is gathered: we run category prompts ("best CRM for SMEs"), brand prompts ("what is {selectedBrand.name} known for"),
-        and competitor-anchored prompts ("alternatives to …") across ChatGPT, Claude and Gemini, then measure how often each concept
+        and competitor-anchored prompts ("alternatives to …") across ChatGPT and Claude, then measure how often each concept
         appears in the responses.
       </p>
     </div>

@@ -570,7 +570,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             <div>
               <label className="block text-xs text-muted-foreground mb-2">Select model</label>
               <div className="flex justify-center gap-1.5">
-                {['ChatGPT', 'Claude', 'Gemini', 'All'].map(m => (
+                {['ChatGPT', 'Claude', 'All'].map(m => (
                   <button
                     key={m}
                     onClick={() => setSelectedModel(m)}

@@ -80,7 +80,7 @@ export function PositioningProbe({ brands, onAddAttribute }: PositioningProbePro
           <div>
             <label className="text-[10px] text-muted-foreground uppercase tracking-wide block mb-1">Model</label>
             <div className="flex gap-1">
-              {['ChatGPT', 'Claude', 'Gemini', 'All'].map(m => (
+              {['ChatGPT', 'Claude', 'All'].map(m => (
                 <button
                   key={m}
                   onClick={() => setSelectedModel(m)}
@@ -97,7 +97,7 @@ export function PositioningProbe({ brands, onAddAttribute }: PositioningProbePro
 
         {/* Explanatory text — replaces the old prompt template block */}
         <p className="text-xs text-muted-foreground leading-relaxed">
-          We'll ask ChatGPT, Claude and Gemini what makes{' '}
+          We'll ask ChatGPT and Claude what makes{' '}
           <span className="font-medium text-foreground">{primaryBrand?.name ?? 'your brand'}</span>{' '}
           distinct from{' '}
           <span className="font-medium text-foreground">{competitorNames || 'selected competitors'}</span>{' '}

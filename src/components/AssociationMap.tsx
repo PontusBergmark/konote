@@ -100,8 +100,8 @@ export function AssociationMap({ brands, attributes }: AssociationMapProps) {
                             </div>
                           </div>
                         </div>
-                        <div className="flex gap-1" title={`ChatGPT ${(models.chatgpt ?? 0) > 50 ? '✓' : '✗'} · Claude ${(models.claude ?? 0) > 50 ? '✓' : '✗'} · Gemini ${(models.gemini ?? 0) > 50 ? '✓' : '✗'}`}>
-                          {['chatgpt', 'claude', 'gemini'].map(m => (
+                        <div className="flex gap-1" title={`ChatGPT ${(models.chatgpt ?? 0) > 50 ? '✓' : '✗'} · Claude ${(models.claude ?? 0) > 50 ? '✓' : '✗'}`}>
+                          {['chatgpt', 'claude'].map(m => (
                             <span
                               key={m}
                               className="w-1.5 h-1.5 rounded-full"
