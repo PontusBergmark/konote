@@ -35,9 +35,7 @@ const NAV_SECTIONS: Array<{ label: string; items: Array<{ id: ViewId; name: stri
   },
 ]
 
-export function Sidebar({ currentView, onViewChange, searchQuery, onSearchChange, usage, isDark, onToggleTheme }: SidebarProps) {
-  const plan = PLANS[usage.currentTier]
-
+export function Sidebar({ currentView, onViewChange, searchQuery, onSearchChange, isDark, onToggleTheme }: SidebarProps) {
   return (
     <div className="w-[220px] min-w-[220px] h-screen bg-sidebar-bg border-r border-border flex flex-col">
       <div className="px-4 py-4 flex items-center justify-between">
