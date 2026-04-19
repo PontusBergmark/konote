@@ -2,11 +2,14 @@ import { useState } from 'react'
 import type { Brand } from '../types'
 import { positioningProbeResults } from '../data/positioning'
 import { AssociationPill } from './AssociationPill'
+import { ScanProgressBar } from './ScanProgressBar'
 
 interface PositioningProbeProps {
   brands: Brand[]
   onAddAttribute: (name: string) => void
 }
+
+const PROBE_DURATION_MS = 8000
 
 export function PositioningProbe({ brands, onAddAttribute }: PositioningProbeProps) {
   const [primaryBrandId, setPrimaryBrandId] = useState(brands[0]?.id ?? '')
@@ -15,6 +18,17 @@ export function PositioningProbe({ brands, onAddAttribute }: PositioningProbePro
   )
   const [selectedModel, setSelectedModel] = useState('All')
   const [showResults, setShowResults] = useState(true)
+  const [isProbing, setIsProbing] = useState(false)
+
+  const handleRunProbe = () => {
+    if (isProbing) return
+    setShowResults(false)
+    setIsProbing(true)
+    setTimeout(() => {
+      setIsProbing(false)
+      setShowResults(true)
+    }, PROBE_DURATION_MS)
+  }
 
   const primaryBrand = brands.find(b => b.id === primaryBrandId) ?? brands[0]
   const availableCompetitors = brands.filter(b => b.id !== primaryBrandId)
@@ -105,12 +119,15 @@ export function PositioningProbe({ brands, onAddAttribute }: PositioningProbePro
         </p>
 
         <button
-          onClick={() => setShowResults(true)}
-          className="px-3 py-1.5 text-xs bg-primary text-primary-foreground rounded-md hover:opacity-90 font-medium"
+          onClick={handleRunProbe}
+          disabled={isProbing}
+          className="px-3 py-1.5 text-xs bg-primary text-primary-foreground rounded-md hover:opacity-90 font-medium disabled:opacity-50"
         >
-          Run probe ↗
+          {isProbing ? 'Probing…' : 'Run probe ↗'}
         </button>
       </div>
+
+      <ScanProgressBar isScanning={isProbing} durationMs={PROBE_DURATION_MS} />
 
       {/* Results */}
       {showResults && result && (
