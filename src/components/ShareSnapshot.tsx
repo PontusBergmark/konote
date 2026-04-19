@@ -61,14 +61,13 @@ export function ShareSnapshot({
       >
         {/* Snapshot card */}
         <div
-          className="rounded-2xl overflow-hidden shadow-2xl"
-          style={{
-            background: `linear-gradient(180deg, ${brand.color}10 0%, hsl(var(--card)) 35%)`,
-            border: '1px solid hsl(var(--border))',
-          }}
+          className="rounded-2xl overflow-hidden shadow-2xl border border-border bg-card"
         >
           {/* Header */}
-          <div className="px-8 pt-8 pb-6">
+          <div
+            className="px-8 pt-8 pb-6"
+            style={{ background: `linear-gradient(180deg, ${brand.color}1A 0%, transparent 100%)` }}
+          >
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2.5">
                 <span
