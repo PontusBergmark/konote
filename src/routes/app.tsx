@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { createFileRoute } from "@tanstack/react-router";
 import { Sidebar } from '../components/Sidebar'
-import { TopBar } from '../components/TopBar'
+import { TopBar, SCAN_MODES, type ScanMode } from '../components/TopBar'
 import { SummaryBar } from '../components/SummaryBar'
 import { Overview } from '../components/Overview'
 import { AssociationMap } from '../components/AssociationMap'
@@ -34,15 +34,19 @@ function AppPage() {
   const { exportView } = useExport()
   const [isScanning, setIsScanning] = useState(false)
   const [lastScannedAt, setLastScannedAt] = useState<Date | null>(null)
+  const [scanMode, setScanMode] = useState<ScanMode>('quick')
+  const [activeScanDuration, setActiveScanDuration] = useState<number>(SCAN_MODES.quick.durationMs)
 
-  const handleRunScan = () => {
+  const handleRunScan = (mode: ScanMode = scanMode) => {
+    const cfg = SCAN_MODES[mode]
+    setActiveScanDuration(cfg.durationMs)
     setIsScanning(true)
-    const prompt = `Run a full association scan for ${app.selectedBrand?.name ?? 'brand'} across all tracked prompts and attributes. Return structured results for each attribute showing explicit mention frequency.`
+    const prompt = `Run a ${cfg.label.toLowerCase()} (${cfg.prompts} prompts) for ${app.selectedBrand?.name ?? 'brand'} across all tracked prompts and attributes. Return structured results for each attribute showing explicit mention frequency.`
     console.log('[mock scan] sendPrompt:', prompt)
     setTimeout(() => {
       setIsScanning(false)
       setLastScannedAt(new Date())
-    }, 2500)
+    }, cfg.durationMs)
   }
 
   if (app.showOnboarding) {
@@ -92,8 +96,10 @@ function AppPage() {
           onExport={handleExport}
           onRunScan={handleRunScan}
           isScanning={isScanning}
+          scanMode={scanMode}
+          onScanModeChange={setScanMode}
         />
-        <ScanProgressBar isScanning={isScanning} durationMs={2500} />
+        <ScanProgressBar isScanning={isScanning} durationMs={activeScanDuration} />
         <SummaryBar
           selectedBrand={app.selectedBrand}
           attributes={app.attributes}
