@@ -7,9 +7,10 @@ interface AssociationPillProps {
   bgColor?: string
   onAdd?: () => void
   frequencyBadge?: number
+  added?: boolean
 }
 
-export function AssociationPill({ term, strength, color, bgColor, onAdd, frequencyBadge }: AssociationPillProps) {
+export function AssociationPill({ term, strength, color, bgColor, onAdd, frequencyBadge, added }: AssociationPillProps) {
   const opacity = strength === 'strong' ? 1 : strength === 'moderate' ? 0.8 : 0.5
 
   return (
@@ -25,9 +26,11 @@ export function AssociationPill({ term, strength, color, bgColor, onAdd, frequen
       {(strength === 'moderate' || strength === 'weak') && frequencyBadge !== undefined && (
         <span className="text-[9px] opacity-70">{frequencyBadge}</span>
       )}
-      {onAdd && (
-        <button onClick={onAdd} className="ml-0.5 hover:opacity-70 text-[10px]">+</button>
-      )}
+      {added ? (
+        <span className="ml-0.5 text-[9px] uppercase tracking-wide opacity-80" title="Tracked as intended">✓ intended</span>
+      ) : onAdd ? (
+        <button onClick={onAdd} className="ml-0.5 hover:opacity-70 text-[10px]" title="Track as intended">+</button>
+      ) : null}
     </span>
   )
 }
