@@ -347,50 +347,42 @@ export function Overview({
           </div>
         ) : (
           <div className="bg-card border border-border rounded-lg divide-y divide-border">
-            {intendedResults.map(r => {
-              const dir = getDeltaDirection(r.delta)
-              return (
-                <div key={r.attr.id} className="flex items-center gap-3 px-4 py-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-medium text-foreground truncate">{r.attr.name}</span>
-                      <span className="text-[9px] uppercase tracking-wide text-primary border border-primary/40 px-1.5 py-0.5 rounded">
-                        intended
-                      </span>
-                    </div>
-                    <p className={`text-[11px] ${statusTone(r.status)}`}>
-                      {statusCopy(r.status, selectedBrand.name, r.attr.name)}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    {r.current <= 0 ? (
-                      <button
-                        onClick={() => onNavigate('prompts')}
-                        className="w-24 h-1.5 rounded-full border border-dashed border-border flex items-center justify-center text-[9px] uppercase tracking-wide text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
-                        title="Not yet associated — review your prompts"
-                      >
-                        no signal
-                      </button>
-                    ) : (
-                      <div className="w-24 h-1.5 rounded-full bg-secondary overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all"
-                          style={{ width: `${r.current}%`, backgroundColor: selectedBrand.color }}
-                        />
-                      </div>
-                    )}
-                    <span className="text-xs font-medium text-foreground w-8 text-right tabular-nums">
-                      {Math.round(r.current)}
-                    </span>
-                    <span className={`text-[11px] w-10 text-right tabular-nums ${
-                      dir === 'positive' ? 'text-primary' : dir === 'negative' ? 'text-destructive' : 'text-muted-foreground'
-                    }`}>
-                      {dir === 'positive' ? '↑' : dir === 'negative' ? '↓' : '·'} {Math.abs(r.delta)}
+            {intendedResults.map(r => (
+              <div key={r.attr.id} className="flex items-center gap-3 px-4 py-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-medium text-foreground truncate">{r.attr.name}</span>
+                    <span className="text-[9px] uppercase tracking-wide text-primary border border-primary/40 px-1.5 py-0.5 rounded">
+                      intended
                     </span>
                   </div>
+                  <p className={`text-[11px] ${statusTone(r.status)}`}>
+                    {statusCopy(r.status, selectedBrand.name, r.attr.name)}
+                  </p>
                 </div>
-              )
-            })}
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  {r.current <= 0 ? (
+                    <button
+                      onClick={() => onNavigate('prompts')}
+                      className="w-24 h-1.5 rounded-full border border-dashed border-border flex items-center justify-center text-[9px] uppercase tracking-wide text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
+                      title="Not yet associated — review your prompts"
+                    >
+                      no signal
+                    </button>
+                  ) : (
+                    <div className="w-24 h-1.5 rounded-full bg-secondary overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{ width: `${r.current}%`, backgroundColor: selectedBrand.color }}
+                      />
+                    </div>
+                  )}
+                  <span className="text-xs font-medium text-foreground w-8 text-right tabular-nums">
+                    {Math.round(r.current)}
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
         )}
         {intendedResults.some(r => r.status === 'weak' || r.status === 'absent') && (
