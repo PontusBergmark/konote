@@ -207,7 +207,10 @@ export function Overview({
         <ShareSnapshot
           brand={selectedBrand}
           scannedAt={lastScannedAt ?? null}
-          topAssociations={topAssociations}
+          topAssociations={[
+            ...intendedAttrs.map(a => ({ label: a.name, score: brandScores[a.id] ?? 0, intended: true })),
+            ...discovered.map(d => ({ label: d.entity, score: d.frequency, intended: false })),
+          ].sort((a, b) => b.score - a.score).slice(0, 5)}
           intendedLanding={{ landing: landingCount, total: intendedAttrs.length }}
           biggestGap={biggestGap ? { name: biggestGap.attr.name, score: biggestGap.current } : null}
           onClose={() => setShowSnapshot(false)}

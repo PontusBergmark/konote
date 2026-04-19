@@ -1,4 +1,5 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { toPng } from 'html-to-image'
 import type { Brand } from '../types'
 
 export interface SnapshotAssociation {
@@ -28,6 +29,9 @@ export function ShareSnapshot({
   biggestGap,
   onClose,
 }: ShareSnapshotProps) {
+  const cardRef = useRef<HTMLDivElement>(null)
+  const [downloading, setDownloading] = useState(false)
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
@@ -37,6 +41,26 @@ export function ShareSnapshot({
       document.body.style.overflow = ''
     }
   }, [onClose])
+
+  const handleDownload = async () => {
+    if (!cardRef.current || downloading) return
+    setDownloading(true)
+    try {
+      const dataUrl = await toPng(cardRef.current, {
+        pixelRatio: 2,
+        cacheBust: true,
+        backgroundColor: 'transparent',
+      })
+      const link = document.createElement('a')
+      link.download = `konote-${brand.name.toLowerCase().replace(/\s+/g, '-')}-snapshot.png`
+      link.href = dataUrl
+      link.click()
+    } catch (err) {
+      console.error('Snapshot download failed', err)
+    } finally {
+      setDownloading(false)
+    }
+  }
 
   const top = topAssociations[0]
   const max = top?.score ?? 100
@@ -61,6 +85,7 @@ export function ShareSnapshot({
       >
         {/* Snapshot card */}
         <div
+          ref={cardRef}
           className="rounded-2xl overflow-hidden shadow-2xl border border-border bg-card"
         >
           {/* Header */}
@@ -175,21 +200,32 @@ export function ShareSnapshot({
 
           {/* Footer */}
           <div className="bg-card px-8 py-4 border-t border-border flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-foreground" />
-              <span className="text-xs font-semibold tracking-tight text-foreground">
-                Konote
+            <div className="flex flex-col gap-0.5">
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-foreground" />
+                <span className="text-xs font-semibold tracking-tight text-foreground">
+                  Konote
+                </span>
+              </div>
+              <span className="text-[10px] text-muted-foreground tracking-wide ml-3">
+                Powered by ChatGPT · Claude
               </span>
             </div>
             <span className="text-[10px] text-muted-foreground tracking-wide">
-              konote.lovable.app
+              konote.app
             </span>
           </div>
         </div>
 
-        <p className="text-center text-[11px] text-white/60 mt-4">
-          Screenshot this card to share.
-        </p>
+        <div className="flex justify-center mt-4">
+          <button
+            onClick={handleDownload}
+            disabled={downloading}
+            className="px-4 py-2 text-xs font-medium rounded-md bg-white text-black hover:bg-white/90 disabled:opacity-60 transition-colors"
+          >
+            {downloading ? 'Generating…' : 'Download as image ↓'}
+          </button>
+        </div>
       </div>
     </div>
   )
