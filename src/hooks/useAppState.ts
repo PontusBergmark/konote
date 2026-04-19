@@ -12,7 +12,6 @@ export function useAppState() {
   const [enabledModels, setEnabledModels] = useState<Record<string, boolean>>({
     ChatGPT: true,
     Claude: true,
-    Gemini: true,
   })
   const [onboardingDone, setOnboardingDone] = useState(false)
 
