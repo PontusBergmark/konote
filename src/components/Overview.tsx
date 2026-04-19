@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import type { Brand, Attribute, ViewId } from '../types'
 import { currentScores, previousScores } from '../data/scores'
 import { coOccurrenceData } from '../data/cooccurrence'
 import { calculateDelta, getDeltaDirection } from '../utils/scoring'
+import { ShareSnapshot } from './ShareSnapshot'
 
 interface OverviewProps {
   brands: Brand[]
