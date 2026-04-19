@@ -123,8 +123,10 @@ export function AssociationMap({ brands, attributes }: AssociationMapProps) {
                 </td>
                 {visibleAttrs.map(attr => {
                   const score = currentScores.scores[brand.id]?.[attr.id] ?? 0
-                  const pct = score / maxScore
-                  const bg = `color-mix(in oklch, var(--heatmap-high) ${Math.round(pct * 100)}%, var(--heatmap-low))`
+                  const pct = Math.max(0, Math.min(1, score / maxScore))
+                  // Proportional alpha on a saturated teal — near-zero scores render almost white
+                  const alphaPct = Math.round(pct * 100)
+                  const bg = `color-mix(in oklch, var(--heatmap-base) ${alphaPct}%, transparent)`
                   const models = modelScores[brand.id]?.[attr.id] ?? {}
 
                   return (
@@ -132,7 +134,7 @@ export function AssociationMap({ brands, attributes }: AssociationMapProps) {
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
                           <div className="h-5 rounded-sm flex-1 max-w-[80px] relative" style={{ backgroundColor: bg }}>
-                            <div className="absolute inset-0 flex items-center justify-center text-[10px] font-medium" style={{ color: pct > 0.5 ? 'white' : 'var(--color-foreground)' }}>
+                            <div className="absolute inset-0 flex items-center justify-center text-[10px] font-medium" style={{ color: pct > 0.6 ? 'white' : 'var(--color-foreground)' }}>
                               {score}
                             </div>
                           </div>
