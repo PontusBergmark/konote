@@ -54,7 +54,10 @@ export function PositioningProbe({ brands, onAddAttribute }: PositioningProbePro
 
   return (
     <div className="p-6 max-w-6xl">
-      <h2 className="text-sm font-medium text-foreground mb-4">Positioning probe</h2>
+      <h2 className="text-sm font-medium text-foreground mb-1">Positioning probe</h2>
+      <p className="text-xs text-muted-foreground mb-4 max-w-2xl leading-relaxed">
+        See how LLMs actually position your brand against competitors — what they describe as uniquely yours, what they hand to rivals, and where you blend into the category.
+      </p>
 
       {/* Configuration */}
       <div className="bg-card border border-border rounded-lg p-4 mb-6 space-y-3">
