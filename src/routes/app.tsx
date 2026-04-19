@@ -153,6 +153,7 @@ function AppPage() {
           {app.currentView === 'positioning-probe' && (
             <PositioningProbe
               brands={app.brands}
+              attributes={app.attributes}
               onAddAttribute={handleAddAttributeFromProbe}
             />
           )}
