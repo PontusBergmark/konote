@@ -196,6 +196,14 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   return (
     <div className="min-h-screen bg-background flex justify-center">
       <div className="w-full max-w-md px-6 pt-24 pb-12">
+        {step > 0 && (
+          <button
+            onClick={() => setStep(s => Math.max(0, s - 1))}
+            className="mb-3 text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+          >
+            ← Back
+          </button>
+        )}
         {/* Compact stepper — constant size across steps */}
         {step < 4 && (
           <div className="mb-8">
