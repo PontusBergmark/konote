@@ -37,7 +37,8 @@ function AppPage() {
   const [scanMode, setScanMode] = useState<ScanMode>('quick')
   const [activeScanDuration, setActiveScanDuration] = useState<number>(SCAN_MODES.quick.durationMs)
 
-  const handleRunScan = (mode: ScanMode = scanMode) => {
+  const handleRunScan = (mode?: ScanMode) => {
+    const resolved: ScanMode = mode && SCAN_MODES[mode] ? mode : scanMode
     const cfg = SCAN_MODES[mode]
     setActiveScanDuration(cfg.durationMs)
     setIsScanning(true)
