@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react'
 import type { Brand, Prompt, Attribute, PromptType } from '../types'
+import { SCAN_MODES, type ScanMode } from './TopBar'
 
 interface OnboardingProps {
-  onComplete: (data: { ownBrand: Brand; competitors: Brand[]; prompts: Prompt[]; attributes: Attribute[]; runScan: boolean }) => void
+  onComplete: (data: { ownBrand: Brand; competitors: Brand[]; prompts: Prompt[]; attributes: Attribute[]; runScan: boolean; scanMode: ScanMode }) => void
 }
 
 const SWATCHES = ['#FF5C35', '#00A1E0', '#1A1A2E', '#E42527', '#1A3C5E', '#6C3EF4', '#10B981', '#F59E0B']
@@ -69,6 +70,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
   // Step 4 — Final
   const [selectedModel, setSelectedModel] = useState('All')
+  const [scanMode, setScanMode] = useState<ScanMode>('quick')
 
   const brandLabel = brandName.trim() || 'your brand'
   const categoryLabel = category.trim() || 'CRM'
@@ -182,7 +184,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       order: i,
       isIntended: true,
     }))
-    onComplete({ ownBrand, competitors: compBrands, prompts, attributes, runScan })
+    onComplete({ ownBrand, competitors: compBrands, prompts, attributes, runScan, scanMode })
   }
 
   const stepLabels = ['Your brand', 'Your competitors', 'Your attributes', 'Your first prompts']
@@ -584,13 +586,35 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               </div>
             </div>
 
+            <div>
+              <label className="block text-xs text-muted-foreground mb-2">Scan depth</label>
+              <div className="grid grid-cols-2 gap-2">
+                {(Object.keys(SCAN_MODES) as ScanMode[]).map(m => {
+                  const sm = SCAN_MODES[m]
+                  const selected = scanMode === m
+                  return (
+                    <button
+                      key={m}
+                      onClick={() => setScanMode(m)}
+                      className={`px-3 py-2 rounded-md border text-left transition-colors ${
+                        selected ? 'bg-primary/10 border-primary' : 'bg-card border-border hover:border-primary/50'
+                      }`}
+                    >
+                      <p className="text-xs font-medium text-foreground">{sm.label}</p>
+                      <p className="text-[10px] text-muted-foreground">{sm.prompts} prompts · ~{sm.seconds} sec</p>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
             <div className="space-y-2">
               <button
                 onClick={() => buildData(true)}
                 className="w-full px-6 py-3 text-sm font-semibold text-white rounded-lg hover:opacity-90 transition-opacity"
                 style={{ backgroundColor: '#6C3EF4' }}
               >
-                Run first scan ↗
+                Run {SCAN_MODES[scanMode].label.toLowerCase()} ↗
               </button>
               <button
                 onClick={() => buildData(false)}
