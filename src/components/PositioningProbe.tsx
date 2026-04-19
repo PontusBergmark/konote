@@ -1,17 +1,18 @@
 import { useState } from 'react'
-import type { Brand } from '../types'
+import type { Brand, Attribute } from '../types'
 import { positioningProbeResults } from '../data/positioning'
 import { AssociationPill } from './AssociationPill'
 import { ScanProgressBar } from './ScanProgressBar'
 
 interface PositioningProbeProps {
   brands: Brand[]
+  attributes: Attribute[]
   onAddAttribute: (name: string) => void
 }
 
 const PROBE_DURATION_MS = 8000
 
-export function PositioningProbe({ brands, onAddAttribute }: PositioningProbeProps) {
+export function PositioningProbe({ brands, attributes, onAddAttribute }: PositioningProbeProps) {
   const [primaryBrandId, setPrimaryBrandId] = useState(brands[0]?.id ?? '')
   const [selectedCompetitors, setSelectedCompetitors] = useState<string[]>(
     brands.filter(b => b.id !== (brands[0]?.id ?? '')).map(b => b.id)
@@ -148,17 +149,22 @@ export function PositioningProbe({ brands, onAddAttribute }: PositioningProbePro
                 Unique to {primaryBrand.name}
               </div>
               <div className="p-3 flex flex-wrap gap-1.5">
-                {result.uniqueToPrimary.map(t => (
-                  <AssociationPill
-                    key={t.term}
-                    term={t.term}
-                    strength={t.strength}
-                    color="var(--color-primary)"
-                    bgColor="var(--cep-confirmed-bg)"
-                    onAdd={() => onAddAttribute(t.term)}
-                    frequencyBadge={getStrengthBadge(t.strength)}
-                  />
-                ))}
+                {result.uniqueToPrimary.map(t => {
+                  const id = t.term.toLowerCase().replace(/\s+/g, '-')
+                  const isAdded = attributes.some(a => a.id === id && a.isIntended)
+                  return (
+                    <AssociationPill
+                      key={t.term}
+                      term={t.term}
+                      strength={t.strength}
+                      color="var(--color-primary)"
+                      bgColor="var(--cep-confirmed-bg)"
+                      onAdd={() => onAddAttribute(t.term)}
+                      frequencyBadge={getStrengthBadge(t.strength)}
+                      added={isAdded}
+                    />
+                  )
+                })}
               </div>
             </div>
 
