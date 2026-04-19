@@ -1,14 +1,11 @@
 import { useState } from 'react'
 import type { Prompt, PromptType } from '../types'
-import { UpgradeNudge } from './UpgradeNudge'
 
 interface PromptLibraryProps {
   prompts: Prompt[]
   searchQuery: string
   onAdd: (prompt: Prompt) => void
   onRemove: (id: string) => void
-  maxPrompts: number
-  currentTier: 'free' | 'starter' | 'pro'
 }
 
 const TYPE_LABELS: Record<PromptType, { label: string; color: string; bg: string }> = {
@@ -17,7 +14,7 @@ const TYPE_LABELS: Record<PromptType, { label: string; color: string; bg: string
   association_probe: { label: 'Brand', color: 'var(--badge-concept-text)', bg: 'var(--badge-concept-bg)' },
 }
 
-export function PromptLibrary({ prompts, searchQuery, onAdd, onRemove, maxPrompts, currentTier }: PromptLibraryProps) {
+export function PromptLibrary({ prompts, searchQuery, onAdd, onRemove }: PromptLibraryProps) {
   const [newText, setNewText] = useState('')
   const [newType, setNewType] = useState<PromptType>('category')
   const [collapsed, setCollapsed] = useState<Record<PromptType, boolean>>({
@@ -25,8 +22,6 @@ export function PromptLibrary({ prompts, searchQuery, onAdd, onRemove, maxPrompt
     competitor_anchored: false,
     association_probe: false,
   })
-
-  const atLimit = prompts.length >= maxPrompts
 
   const filtered = prompts.filter(p =>
     !searchQuery || p.text.toLowerCase().includes(searchQuery.toLowerCase())
@@ -39,7 +34,7 @@ export function PromptLibrary({ prompts, searchQuery, onAdd, onRemove, maxPrompt
   }
 
   const handleAdd = () => {
-    if (!newText.trim() || atLimit) return
+    if (!newText.trim()) return
     onAdd({
       id: `p-${Date.now()}`,
       text: newText.trim(),
@@ -54,7 +49,7 @@ export function PromptLibrary({ prompts, searchQuery, onAdd, onRemove, maxPrompt
     <div className="p-6 max-w-4xl">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-sm font-medium text-foreground">Prompts</h2>
-        <span className="text-[11px] text-muted-foreground">{prompts.length}/{maxPrompts} prompts</span>
+        <span className="text-[11px] text-muted-foreground">{prompts.length} prompts</span>
       </div>
 
       {(Object.keys(grouped) as PromptType[]).map(type => {
@@ -96,39 +91,32 @@ export function PromptLibrary({ prompts, searchQuery, onAdd, onRemove, maxPrompt
         )
       })}
 
-      {atLimit ? (
-        <UpgradeNudge
-          feature={`You've reached the ${maxPrompts}-prompt limit.`}
-          requiredTier={currentTier === 'free' ? 'starter' : 'pro'}
+      <div className="mt-6 bg-card border border-border rounded-lg p-4 space-y-3">
+        <textarea
+          value={newText}
+          onChange={e => setNewText(e.target.value)}
+          placeholder="Enter a new prompt..."
+          className="w-full px-2.5 py-1.5 text-xs font-mono bg-background border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary resize-none h-16"
+          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAdd() } }}
         />
-      ) : (
-        <div className="mt-6 bg-card border border-border rounded-lg p-4 space-y-3">
-          <textarea
-            value={newText}
-            onChange={e => setNewText(e.target.value)}
-            placeholder="Enter a new prompt..."
-            className="w-full px-2.5 py-1.5 text-xs font-mono bg-background border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary resize-none h-16"
-            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAdd() } }}
-          />
-          <div className="flex items-center gap-2">
-            {(Object.keys(TYPE_LABELS) as PromptType[]).map(t => (
-              <button
-                key={t}
-                onClick={() => setNewType(t)}
-                className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
-                  newType === t ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'
-                }`}
-              >
-                {TYPE_LABELS[t].label}
-              </button>
-            ))}
-            <span className="text-[10px] text-muted-foreground ml-2">Press Enter to add</span>
-          </div>
-          <button onClick={handleAdd} className="px-3 py-1.5 text-xs bg-primary text-primary-foreground rounded-md hover:opacity-90">
-            Add prompt
-          </button>
+        <div className="flex items-center gap-2">
+          {(Object.keys(TYPE_LABELS) as PromptType[]).map(t => (
+            <button
+              key={t}
+              onClick={() => setNewType(t)}
+              className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                newType === t ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'
+              }`}
+            >
+              {TYPE_LABELS[t].label}
+            </button>
+          ))}
+          <span className="text-[10px] text-muted-foreground ml-2">Press Enter to add</span>
         </div>
-      )}
+        <button onClick={handleAdd} className="px-3 py-1.5 text-xs bg-primary text-primary-foreground rounded-md hover:opacity-90">
+          Add prompt
+        </button>
+      </div>
     </div>
   )
 }
