@@ -184,7 +184,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       order: i,
       isIntended: true,
     }))
-    onComplete({ ownBrand, competitors: compBrands, prompts, attributes, runScan })
+    onComplete({ ownBrand, competitors: compBrands, prompts, attributes, runScan, scanMode })
   }
 
   const stepLabels = ['Your brand', 'Your competitors', 'Your attributes', 'Your first prompts']
