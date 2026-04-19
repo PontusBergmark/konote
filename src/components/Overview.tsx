@@ -97,7 +97,6 @@ export function Overview({
   const [showSnapshot, setShowSnapshot] = useState(false)
   const intendedAttrs = activeAttrs.filter(a => a.isIntended)
   const brandScores = currentScores.scores[selectedBrand.id] ?? {}
-  const prevBrandScores = previousScores.scores[selectedBrand.id] ?? {}
 
   // ---- Empty state: no scan yet ----
   if (!hasScanned) {
