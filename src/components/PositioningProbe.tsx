@@ -149,17 +149,22 @@ export function PositioningProbe({ brands, attributes, onAddAttribute }: Positio
                 Unique to {primaryBrand.name}
               </div>
               <div className="p-3 flex flex-wrap gap-1.5">
-                {result.uniqueToPrimary.map(t => (
-                  <AssociationPill
-                    key={t.term}
-                    term={t.term}
-                    strength={t.strength}
-                    color="var(--color-primary)"
-                    bgColor="var(--cep-confirmed-bg)"
-                    onAdd={() => onAddAttribute(t.term)}
-                    frequencyBadge={getStrengthBadge(t.strength)}
-                  />
-                ))}
+                {result.uniqueToPrimary.map(t => {
+                  const id = t.term.toLowerCase().replace(/\s+/g, '-')
+                  const isAdded = attributes.some(a => a.id === id && a.isIntended)
+                  return (
+                    <AssociationPill
+                      key={t.term}
+                      term={t.term}
+                      strength={t.strength}
+                      color="var(--color-primary)"
+                      bgColor="var(--cep-confirmed-bg)"
+                      onAdd={() => onAddAttribute(t.term)}
+                      frequencyBadge={getStrengthBadge(t.strength)}
+                      added={isAdded}
+                    />
+                  )
+                })}
               </div>
             </div>
 
