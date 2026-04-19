@@ -80,7 +80,7 @@ export function Settings({ brands, onAddBrand, onRemoveBrand, enabledModels, onT
       <div>
         <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Models</h3>
         <div className="space-y-1.5">
-          {['ChatGPT', 'Claude', 'Gemini'].map(model => (
+          {['ChatGPT', 'Claude'].map(model => (
             <div key={model} className="flex items-center justify-between bg-card border border-border rounded-md px-3 py-2">
               <span className="text-xs text-foreground">{model}</span>
               <button
