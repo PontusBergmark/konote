@@ -351,8 +351,8 @@ export function Overview({
                     ) : (
                       <div className="w-24 h-1.5 rounded-full bg-secondary overflow-hidden">
                         <div
-                          className="h-full rounded-full transition-all bg-primary"
-                          style={{ width: `${r.current}%` }}
+                          className="h-full rounded-full transition-all"
+                          style={{ width: `${r.current}%`, backgroundColor: selectedBrand.color }}
                         />
                       </div>
                     )}
