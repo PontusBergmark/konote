@@ -586,13 +586,35 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               </div>
             </div>
 
+            <div>
+              <label className="block text-xs text-muted-foreground mb-2">Scan depth</label>
+              <div className="grid grid-cols-2 gap-2">
+                {(Object.keys(SCAN_MODES) as ScanMode[]).map(m => {
+                  const sm = SCAN_MODES[m]
+                  const selected = scanMode === m
+                  return (
+                    <button
+                      key={m}
+                      onClick={() => setScanMode(m)}
+                      className={`px-3 py-2 rounded-md border text-left transition-colors ${
+                        selected ? 'bg-primary/10 border-primary' : 'bg-card border-border hover:border-primary/50'
+                      }`}
+                    >
+                      <p className="text-xs font-medium text-foreground">{sm.label}</p>
+                      <p className="text-[10px] text-muted-foreground">{sm.prompts} prompts · ~{sm.seconds} sec</p>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
             <div className="space-y-2">
               <button
                 onClick={() => buildData(true)}
                 className="w-full px-6 py-3 text-sm font-semibold text-white rounded-lg hover:opacity-90 transition-opacity"
                 style={{ backgroundColor: '#6C3EF4' }}
               >
-                Run first scan ↗
+                Run {SCAN_MODES[scanMode].label.toLowerCase()} ↗
               </button>
               <button
                 onClick={() => buildData(false)}
