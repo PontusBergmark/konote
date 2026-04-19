@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react'
 import type { Brand, Prompt, Attribute, PromptType } from '../types'
+import { SCAN_MODES, type ScanMode } from './TopBar'
 
 interface OnboardingProps {
-  onComplete: (data: { ownBrand: Brand; competitors: Brand[]; prompts: Prompt[]; attributes: Attribute[]; runScan: boolean }) => void
+  onComplete: (data: { ownBrand: Brand; competitors: Brand[]; prompts: Prompt[]; attributes: Attribute[]; runScan: boolean; scanMode: ScanMode }) => void
 }
 
 const SWATCHES = ['#FF5C35', '#00A1E0', '#1A1A2E', '#E42527', '#1A3C5E', '#6C3EF4', '#10B981', '#F59E0B']
