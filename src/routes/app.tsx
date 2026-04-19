@@ -14,7 +14,7 @@ import { Settings } from '../components/Settings'
 import { Onboarding } from '../components/Onboarding'
 import { ScanProgressBar } from '../components/ScanProgressBar'
 import { useAppState } from '../hooks/useAppState'
-import { useUsage } from '../hooks/useUsage'
+
 import { useTheme } from '../hooks/useTheme'
 import { useExport } from '../hooks/useExport'
 
@@ -30,7 +30,6 @@ export const Route = createFileRoute("/app")({
 
 function AppPage() {
   const app = useAppState()
-  const { usage, plan } = useUsage()
   const { isDark, toggle: toggleTheme } = useTheme()
   const { exportView } = useExport()
   const [isScanning, setIsScanning] = useState(false)
@@ -82,7 +81,6 @@ function AppPage() {
         onViewChange={app.setCurrentView}
         searchQuery={app.searchQuery}
         onSearchChange={app.setSearchQuery}
-        usage={usage}
         isDark={isDark}
         onToggleTheme={toggleTheme}
       />
@@ -154,8 +152,6 @@ function AppPage() {
               searchQuery={app.searchQuery}
               onAdd={app.addPrompt}
               onRemove={app.removePrompt}
-              maxPrompts={plan.maxPrompts}
-              currentTier={usage.currentTier}
             />
           )}
           {app.currentView === 'attributes' && (
@@ -174,7 +170,6 @@ function AppPage() {
               onRemoveBrand={app.removeBrand}
               enabledModels={app.enabledModels}
               onToggleModel={app.toggleModel}
-              currentTier={usage.currentTier}
               onResetOnboarding={app.resetToOnboarding}
             />
           )}

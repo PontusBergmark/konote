@@ -1,13 +1,10 @@
 import type { ViewId } from '../types'
-import type { UsageState } from '../types'
-import { PLANS } from '../config/plan'
 
 interface SidebarProps {
   currentView: ViewId
   onViewChange: (view: ViewId) => void
   searchQuery: string
   onSearchChange: (q: string) => void
-  usage: UsageState
   isDark: boolean
   onToggleTheme: () => void
 }
@@ -36,9 +33,7 @@ const NAV_SECTIONS: Array<{ label: string; items: Array<{ id: ViewId; name: stri
   },
 ]
 
-export function Sidebar({ currentView, onViewChange, searchQuery, onSearchChange, usage, isDark, onToggleTheme }: SidebarProps) {
-  const plan = PLANS[usage.currentTier]
-
+export function Sidebar({ currentView, onViewChange, searchQuery, onSearchChange, isDark, onToggleTheme }: SidebarProps) {
   return (
     <div className="w-[220px] min-w-[220px] h-screen bg-sidebar-bg border-r border-border flex flex-col">
       <div className="px-4 py-4 flex items-center justify-between">
@@ -97,15 +92,6 @@ export function Sidebar({ currentView, onViewChange, searchQuery, onSearchChange
         ))}
       </nav>
 
-      <div className="px-3 py-3 border-t border-border">
-        <p className="text-[11px] text-muted-foreground leading-relaxed">
-          {usage.scansUsed}/{plan.scansPerMonth} scans used this month
-        </p>
-        <p className="text-[11px] text-muted-foreground">
-          {plan.name} plan ·{' '}
-          <button className="text-primary hover:underline">Upgrade ↗</button>
-        </p>
-      </div>
     </div>
   )
 }
