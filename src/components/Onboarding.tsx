@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react'
 import type { Brand, Prompt, Attribute, PromptType } from '../types'
 import { SCAN_MODES, type ScanMode } from './TopBar'
-void SCAN_MODES
 
 interface OnboardingProps {
   onComplete: (data: { ownBrand: Brand; competitors: Brand[]; prompts: Prompt[]; attributes: Attribute[]; runScan: boolean; scanMode: ScanMode }) => void
