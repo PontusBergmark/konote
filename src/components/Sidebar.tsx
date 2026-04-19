@@ -97,15 +97,6 @@ export function Sidebar({ currentView, onViewChange, searchQuery, onSearchChange
         ))}
       </nav>
 
-      <div className="px-3 py-3 border-t border-border">
-        <p className="text-[11px] text-muted-foreground leading-relaxed">
-          {usage.scansUsed}/{plan.scansPerMonth} scans used this month
-        </p>
-        <p className="text-[11px] text-muted-foreground">
-          {plan.name} plan ·{' '}
-          <button className="text-primary hover:underline">Upgrade ↗</button>
-        </p>
-      </div>
     </div>
   )
 }
