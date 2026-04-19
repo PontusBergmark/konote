@@ -246,8 +246,8 @@ export function Overview({
                     </span>
                     <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
                       <div
-                        className={`h-full rounded-full transition-all bg-primary ${a.intended ? '' : 'opacity-35'}`}
-                        style={{ width: `${Math.max(pct, 4)}%` }}
+                        className="h-full rounded-full transition-all"
+                        style={{ width: `${Math.max(pct, 4)}%`, backgroundColor: selectedBrand.color, opacity: a.intended ? 1 : 0.35 }}
                       />
                     </div>
                     <span className="text-xs text-muted-foreground tabular-nums w-8 text-right">
