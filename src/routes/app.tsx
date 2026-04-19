@@ -82,7 +82,6 @@ function AppPage() {
         onViewChange={app.setCurrentView}
         searchQuery={app.searchQuery}
         onSearchChange={app.setSearchQuery}
-        usage={usage}
         isDark={isDark}
         onToggleTheme={toggleTheme}
       />
