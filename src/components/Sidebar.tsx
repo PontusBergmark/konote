@@ -39,9 +39,9 @@ export function Sidebar({ currentView, onViewChange, searchQuery, onSearchChange
       <div className="px-4 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground text-xs font-medium">L</span>
+            <span className="text-primary-foreground text-xs font-medium">K</span>
           </div>
-          <span className="text-sm font-medium text-foreground">LLM Tracker</span>
+          <span className="text-sm font-medium text-foreground">Konote</span>
         </div>
         <button
           onClick={onToggleTheme}
