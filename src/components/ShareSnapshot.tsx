@@ -85,6 +85,7 @@ export function ShareSnapshot({
       >
         {/* Snapshot card */}
         <div
+          ref={cardRef}
           className="rounded-2xl overflow-hidden shadow-2xl border border-border bg-card"
         >
           {/* Header */}
