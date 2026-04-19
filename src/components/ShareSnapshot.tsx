@@ -200,21 +200,32 @@ export function ShareSnapshot({
 
           {/* Footer */}
           <div className="bg-card px-8 py-4 border-t border-border flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-foreground" />
-              <span className="text-xs font-semibold tracking-tight text-foreground">
-                Konote
+            <div className="flex flex-col gap-0.5">
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-foreground" />
+                <span className="text-xs font-semibold tracking-tight text-foreground">
+                  Konote
+                </span>
+              </div>
+              <span className="text-[10px] text-muted-foreground tracking-wide ml-3">
+                Powered by ChatGPT · Claude
               </span>
             </div>
             <span className="text-[10px] text-muted-foreground tracking-wide">
-              konote.lovable.app
+              konote.app
             </span>
           </div>
         </div>
 
-        <p className="text-center text-[11px] text-white/60 mt-4">
-          Screenshot this card to share.
-        </p>
+        <div className="flex justify-center mt-4">
+          <button
+            onClick={handleDownload}
+            disabled={downloading}
+            className="px-4 py-2 text-xs font-medium rounded-md bg-white text-black hover:bg-white/90 disabled:opacity-60 transition-colors"
+          >
+            {downloading ? 'Generating…' : 'Download as image ↓'}
+          </button>
+        </div>
       </div>
     </div>
   )
