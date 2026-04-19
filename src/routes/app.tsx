@@ -37,8 +37,9 @@ function AppPage() {
   const [scanMode, setScanMode] = useState<ScanMode>('quick')
   const [activeScanDuration, setActiveScanDuration] = useState<number>(SCAN_MODES.quick.durationMs)
 
-  const handleRunScan = (mode: ScanMode = scanMode) => {
-    const cfg = SCAN_MODES[mode]
+  const handleRunScan = (mode?: ScanMode) => {
+    const resolved: ScanMode = mode && SCAN_MODES[mode] ? mode : scanMode
+    const cfg = SCAN_MODES[resolved]
     setActiveScanDuration(cfg.durationMs)
     setIsScanning(true)
     const prompt = `Run a ${cfg.label.toLowerCase()} (${cfg.prompts} prompts) for ${app.selectedBrand?.name ?? 'brand'} across all tracked prompts and attributes. Return structured results for each attribute showing explicit mention frequency.`
