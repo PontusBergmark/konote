@@ -84,8 +84,6 @@ function AppPage() {
       <Sidebar
         currentView={app.currentView}
         onViewChange={app.setCurrentView}
-        searchQuery={app.searchQuery}
-        onSearchChange={app.setSearchQuery}
         isDark={isDark}
         onToggleTheme={toggleTheme}
       />
