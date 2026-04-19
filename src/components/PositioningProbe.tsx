@@ -119,12 +119,15 @@ export function PositioningProbe({ brands, onAddAttribute }: PositioningProbePro
         </p>
 
         <button
-          onClick={() => setShowResults(true)}
-          className="px-3 py-1.5 text-xs bg-primary text-primary-foreground rounded-md hover:opacity-90 font-medium"
+          onClick={handleRunProbe}
+          disabled={isProbing}
+          className="px-3 py-1.5 text-xs bg-primary text-primary-foreground rounded-md hover:opacity-90 font-medium disabled:opacity-50"
         >
-          Run probe ↗
+          {isProbing ? 'Probing…' : 'Run probe ↗'}
         </button>
       </div>
+
+      <ScanProgressBar isScanning={isProbing} durationMs={PROBE_DURATION_MS} />
 
       {/* Results */}
       {showResults && result && (
