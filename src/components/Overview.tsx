@@ -340,12 +340,22 @@ export function Overview({
                     </p>
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0">
-                    <div className="w-24 h-1.5 rounded-full bg-secondary overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all bg-primary"
-                        style={{ width: `${r.current}%` }}
-                      />
-                    </div>
+                    {r.current <= 0 ? (
+                      <button
+                        onClick={() => onNavigate('prompts')}
+                        className="w-24 h-1.5 rounded-full border border-dashed border-border flex items-center justify-center text-[9px] uppercase tracking-wide text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
+                        title="Not yet associated — review your prompts"
+                      >
+                        no signal
+                      </button>
+                    ) : (
+                      <div className="w-24 h-1.5 rounded-full bg-secondary overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all bg-primary"
+                          style={{ width: `${r.current}%` }}
+                        />
+                      </div>
+                    )}
                     <span className="text-xs font-medium text-foreground w-8 text-right tabular-nums">
                       {Math.round(r.current)}
                     </span>
