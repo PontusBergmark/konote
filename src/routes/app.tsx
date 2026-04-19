@@ -54,9 +54,10 @@ function AppPage() {
     return (
       <Onboarding
         onComplete={(data) => {
-          const shouldScan = app.completeOnboarding(data)
-          if (shouldScan) {
-            setTimeout(handleRunScan, 100)
+          const { runScan, scanMode: chosenMode } = app.completeOnboarding(data)
+          setScanMode(chosenMode)
+          if (runScan) {
+            setTimeout(() => handleRunScan(chosenMode), 100)
           }
         }}
       />
