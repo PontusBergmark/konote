@@ -235,6 +235,9 @@ export function Overview({
             <div className="divide-y divide-border">
               {topAssociations.slice(1).map((a, i) => {
                 const pct = (a.score / topAssociations[0].score) * 100
+                const alreadyTracked = attributes.some(
+                  attr => attr.name.toLowerCase() === a.label.toLowerCase() && attr.isIntended
+                )
                 return (
                   <div key={`${a.label}-${i}`} className="flex items-center gap-4 px-6 py-2.5">
                     <span className="text-[10px] text-muted-foreground tabular-nums w-4">{i + 2}</span>
@@ -250,9 +253,21 @@ export function Overview({
                     <span className="text-xs text-muted-foreground tabular-nums w-8 text-right">
                       {Math.round(a.score)}
                     </span>
-                    <span className="text-[9px] uppercase tracking-wide w-14 text-right text-primary">
-                      {a.intended ? 'intended' : ''}
-                    </span>
+                    <div className="w-20 flex justify-end">
+                      {a.intended ? (
+                        <span className="text-[9px] uppercase tracking-wide text-primary">intended</span>
+                      ) : alreadyTracked ? (
+                        <span className="text-[9px] uppercase tracking-wide text-muted-foreground">tracked</span>
+                      ) : onPromoteToIntended ? (
+                        <button
+                          onClick={() => onPromoteToIntended(a.label)}
+                          title={`Track "${a.label}" as intended`}
+                          className="text-[10px] font-medium text-primary border border-primary/40 rounded-full px-2 py-0.5 hover:bg-primary/10 transition-colors"
+                        >
+                          + track
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
                 )
               })}
