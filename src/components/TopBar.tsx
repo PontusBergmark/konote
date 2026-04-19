@@ -42,7 +42,7 @@ export function TopBar({ brands, selectedBrand, onBrandChange, onExport, onRunSc
         </div>
 
         <div className="flex items-center gap-1.5">
-          {['Last 30 days', 'All tags', 'All models'].map(f => (
+          {['All tags', 'All models'].map(f => (
             <span key={f} className="px-2 py-0.5 text-[11px] rounded-full bg-secondary text-secondary-foreground">
               {f}
             </span>
