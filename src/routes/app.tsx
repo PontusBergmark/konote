@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { createFileRoute } from "@tanstack/react-router";
 import { Sidebar } from '../components/Sidebar'
-import { TopBar } from '../components/TopBar'
+import { TopBar, SCAN_MODES, type ScanMode } from '../components/TopBar'
 import { SummaryBar } from '../components/SummaryBar'
 import { Overview } from '../components/Overview'
 import { AssociationMap } from '../components/AssociationMap'
