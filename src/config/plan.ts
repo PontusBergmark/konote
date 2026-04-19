@@ -26,7 +26,7 @@ export const PLANS: Record<string, PlanTier> = {
     price: 49,
     maxBrands: 10,
     maxPrompts: 30,
-    models: ['ChatGPT', 'Claude', 'Gemini'],
+    models: ['ChatGPT', 'Claude'],
     runsPerPrompt: 5,
     scansPerMonth: 30,
     positioningProbesPerMonth: 'unlimited',
