@@ -146,8 +146,9 @@
 
   --brand-purple: oklch(0.6 0.22 290);
   --brand-negative: oklch(0.6 0.2 20);
-  --heatmap-low: oklch(0.35 0.02 80);
-  --heatmap-high: oklch(0.55 0.12 160);
+  --heatmap-low: oklch(0.18 0.01 195);
+  --heatmap-high: oklch(0.7 0.14 195);
+  --heatmap-base: oklch(0.7 0.15 195);
 
   --badge-competitor-bg: oklch(0.25 0.04 20);
   --badge-competitor-text: oklch(0.75 0.12 20);
