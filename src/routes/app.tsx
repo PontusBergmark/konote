@@ -95,6 +95,7 @@ function AppPage() {
           onRunScan={handleRunScan}
           isScanning={isScanning}
         />
+        <ScanProgressBar isScanning={isScanning} durationMs={2500} />
         <SummaryBar
           selectedBrand={app.selectedBrand}
           attributes={app.attributes}
