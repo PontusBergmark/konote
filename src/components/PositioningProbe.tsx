@@ -80,7 +80,7 @@ export function PositioningProbe({ brands, onAddAttribute }: PositioningProbePro
           <div>
             <label className="text-[10px] text-muted-foreground uppercase tracking-wide block mb-1">Model</label>
             <div className="flex gap-1">
-              {['ChatGPT', 'Claude', 'Gemini', 'All'].map(m => (
+              {['ChatGPT', 'Claude', 'All'].map(m => (
                 <button
                   key={m}
                   onClick={() => setSelectedModel(m)}
