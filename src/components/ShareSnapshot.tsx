@@ -29,6 +29,9 @@ export function ShareSnapshot({
   biggestGap,
   onClose,
 }: ShareSnapshotProps) {
+  const cardRef = useRef<HTMLDivElement>(null)
+  const [downloading, setDownloading] = useState(false)
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
@@ -38,6 +41,26 @@ export function ShareSnapshot({
       document.body.style.overflow = ''
     }
   }, [onClose])
+
+  const handleDownload = async () => {
+    if (!cardRef.current || downloading) return
+    setDownloading(true)
+    try {
+      const dataUrl = await toPng(cardRef.current, {
+        pixelRatio: 2,
+        cacheBust: true,
+        backgroundColor: 'transparent',
+      })
+      const link = document.createElement('a')
+      link.download = `konote-${brand.name.toLowerCase().replace(/\s+/g, '-')}-snapshot.png`
+      link.href = dataUrl
+      link.click()
+    } catch (err) {
+      console.error('Snapshot download failed', err)
+    } finally {
+      setDownloading(false)
+    }
+  }
 
   const top = topAssociations[0]
   const max = top?.score ?? 100
