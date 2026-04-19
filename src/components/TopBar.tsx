@@ -62,14 +62,50 @@ export function TopBar({ brands, selectedBrand, onBrandChange, onExport, onRunSc
       </div>
 
       <div className="flex items-center gap-2">
-        <button
-          onClick={onRunScan}
-          disabled={isScanning}
-          className="px-3 py-1 text-xs font-medium rounded-md text-white hover:opacity-90 disabled:opacity-50 transition-opacity"
-          style={{ backgroundColor: '#6C3EF4' }}
-        >
-          {isScanning ? 'Scanning…' : 'Run scan ↗'}
-        </button>
+        <div className="relative flex">
+          <button
+            onClick={() => onRunScan(scanMode)}
+            disabled={isScanning}
+            className="px-3 py-1 text-xs font-medium rounded-l-md text-white hover:opacity-90 disabled:opacity-50 transition-opacity"
+            style={{ backgroundColor: '#6C3EF4' }}
+          >
+            {isScanning ? 'Scanning…' : `Run ${mode.label.toLowerCase()} ↗`}
+          </button>
+          <button
+            onClick={() => setScanMenuOpen(o => !o)}
+            disabled={isScanning}
+            aria-label="Choose scan mode"
+            className="px-1.5 py-1 rounded-r-md text-white hover:opacity-90 disabled:opacity-50 transition-opacity border-l border-white/20"
+            style={{ backgroundColor: '#6C3EF4' }}
+          >
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {scanMenuOpen && (
+            <div className="absolute top-full right-0 mt-1 bg-popover border border-border rounded-md shadow-md z-50 min-w-[260px] py-1">
+              {(Object.keys(SCAN_MODES) as ScanMode[]).map(m => {
+                const sm = SCAN_MODES[m]
+                const selected = m === scanMode
+                return (
+                  <button
+                    key={m}
+                    onClick={() => { onScanModeChange(m); setScanMenuOpen(false) }}
+                    className={`w-full flex items-start gap-2 px-3 py-2 text-left hover:bg-accent ${selected ? 'bg-accent' : ''}`}
+                  >
+                    <span className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${selected ? 'bg-primary' : 'bg-muted-foreground/30'}`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-foreground">{sm.label}</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {sm.prompts} prompts · ~{sm.seconds} sec
+                      </p>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </div>
         <button
           onClick={onExport}
           className="px-3 py-1 text-xs border border-border rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
