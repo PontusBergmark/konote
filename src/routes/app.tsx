@@ -191,6 +191,8 @@ function AppPage() {
           {app.currentView === 'co-occurrence' && (
             <CoOccurrence
               brands={app.brands}
+              attributes={app.attributes}
+              scores={filteredScores}
               selectedBrandId={app.selectedBrandId}
               onBrandChange={app.setSelectedBrandId}
             />
