@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from '@tanstack/react-start'
 import { Sidebar } from '../components/Sidebar'
-import { TopBar, SCAN_MODES, RUNS_PER_PROMPT, type ScanMode } from '../components/TopBar'
+import { TopBar, SCAN_MODES, MODELS_PER_PROMPT, type ScanMode } from '../components/TopBar'
 import { SummaryBar } from '../components/SummaryBar'
 import { Overview } from '../components/Overview'
 import { AssociationMap } from '../components/AssociationMap'
@@ -20,6 +20,7 @@ import { useTheme } from '../hooks/useTheme'
 import { useExport } from '../hooks/useExport'
 import { currentScores } from '../data/scores'
 import { runLiveScan } from '../utils/scan.functions'
+import type { ModelScoreMatrix } from '../types'
 
 export const Route = createFileRoute("/app")({
   component: AppPage,
@@ -39,6 +40,7 @@ function AppPage() {
   const [isScanning, setIsScanning] = useState(false)
   const [lastScannedAt, setLastScannedAt] = useState<Date | null>(null)
   const [scanScores, setScanScores] = useState(currentScores.scores)
+  const [scanModelScores, setScanModelScores] = useState<ModelScoreMatrix>({})
   const [scanMode, setScanMode] = useState<ScanMode>('quick')
   const [activeScanDuration, setActiveScanDuration] = useState<number>(SCAN_MODES.quick.durationMs)
 
@@ -57,6 +59,7 @@ function AppPage() {
         },
       })
       setScanScores(result.scores)
+      setScanModelScores(result.modelScores ?? {})
       setIsScanning(false)
       setLastScannedAt(new Date())
     } catch (error) {
@@ -121,7 +124,7 @@ function AppPage() {
         <ScanProgressBar
           isScanning={isScanning}
           durationMs={activeScanDuration}
-          totalCalls={SCAN_MODES[scanMode].prompts * RUNS_PER_PROMPT}
+          totalCalls={SCAN_MODES[scanMode].prompts * MODELS_PER_PROMPT}
         />
         <SummaryBar
           selectedBrand={app.selectedBrand}
@@ -159,10 +162,10 @@ function AppPage() {
             />
           )}
           {app.currentView === 'association-map' && (
-            <AssociationMap brands={app.brands} attributes={app.attributes} scores={scanScores} />
+              <AssociationMap brands={app.brands} attributes={app.attributes} scores={scanScores} modelScores={scanModelScores} />
           )}
           {app.currentView === 'attribute-scores' && (
-            <AttributeScores brands={app.brands} attributes={app.attributes} scores={scanScores} />
+            <AttributeScores brands={app.brands} attributes={app.attributes} scores={scanScores} modelScores={scanModelScores} />
           )}
           {app.currentView === 'co-occurrence' && (
             <CoOccurrence
