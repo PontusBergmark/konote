@@ -23,8 +23,21 @@ export async function performLiveScan(data: ScanInput) {
     return { scores, responses: 0 }
   }
 
-  const scanPrompt = buildScanPrompt(data.brands, activeAttributes, prompts)
-  const responses = [await callClaude(scanPrompt)].filter((response) => response.trim().length > 0)
+  const responses: string[] = []
+
+  for (const [index, prompt] of prompts.entries()) {
+    const scanPrompt = buildScanPrompt(data.brands, activeAttributes, [prompt])
+    const label = `prompt ${index + 1}/${prompts.length}`
+    const startedAt = Date.now()
+
+    console.log(`[scan] Anthropic API call starting for ${label}: ${prompt.text}`)
+    const response = await callClaude(scanPrompt)
+    console.log(`[scan] Anthropic API call completed for ${label} in ${Date.now() - startedAt}ms`)
+
+    if (response.trim().length > 0) {
+      responses.push(response)
+    }
+  }
 
   if (responses.length === 0) {
     return { scores, responses: 0 }
