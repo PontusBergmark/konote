@@ -123,7 +123,7 @@ export function AssociationMap({ brands, attributes, scores = currentScores.scor
                   </div>
                 </td>
                 {visibleAttrs.map(attr => {
-                  const score = currentScores.scores[brand.id]?.[attr.id] ?? 0
+                  const score = scores[brand.id]?.[attr.id] ?? 0
                   const pct = Math.max(0, Math.min(1, score / maxScore))
                   // Proportional alpha on a saturated teal — near-zero scores render almost white
                   const alphaPct = Math.round(pct * 100)
@@ -181,7 +181,7 @@ export function AssociationMap({ brands, attributes, scores = currentScores.scor
               .sort(([, a], [, b]) => b - a)
               .map(([brandId, share]) => {
                 const brand = brands.find(b => b.id === brandId)
-                const score = currentScores.scores[brandId]?.[detailAttr.id] ?? 0
+                const score = scores[brandId]?.[detailAttr.id] ?? 0
                 return (
                   <div key={brandId} className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
