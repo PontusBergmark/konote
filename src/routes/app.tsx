@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from '@tanstack/react-start'
 import { Sidebar } from '../components/Sidebar'
-import { TopBar, SCAN_MODES, type ScanMode } from '../components/TopBar'
+import { TopBar, SCAN_MODES, RUNS_PER_PROMPT, type ScanMode } from '../components/TopBar'
 import { SummaryBar } from '../components/SummaryBar'
 import { Overview } from '../components/Overview'
 import { AssociationMap } from '../components/AssociationMap'
@@ -118,7 +118,11 @@ function AppPage() {
           scanMode={scanMode}
           onScanModeChange={setScanMode}
         />
-        <ScanProgressBar isScanning={isScanning} durationMs={activeScanDuration} />
+        <ScanProgressBar
+          isScanning={isScanning}
+          durationMs={activeScanDuration}
+          totalCalls={SCAN_MODES[scanMode].prompts * RUNS_PER_PROMPT}
+        />
         <SummaryBar
           selectedBrand={app.selectedBrand}
           attributes={app.attributes}
