@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import type { Brand } from '../types'
+import type { Brand, ScanModel } from '../types'
 
 export type ScanMode = 'quick' | 'full'
 
 export const MODELS_PER_PROMPT = 2
+export type ModelFilter = 'All' | ScanModel
 
 export const SCAN_MODES: Record<ScanMode, { label: string; prompts: number; seconds: number; durationMs: number }> = {
   quick: { label: 'Quick scan', prompts: 9, seconds: 60, durationMs: 60000 },
@@ -19,12 +20,21 @@ interface TopBarProps {
   isScanning?: boolean
   scanMode: ScanMode
   onScanModeChange: (mode: ScanMode) => void
+  selectedModel: ModelFilter
+  onModelChange: (model: ModelFilter) => void
 }
 
-export function TopBar({ brands, selectedBrand, onBrandChange, onExport, onRunScan, isScanning, scanMode, onScanModeChange }: TopBarProps) {
+const MODEL_OPTIONS: Array<{ value: ModelFilter; label: string }> = [
+  { value: 'All', label: 'All models' },
+  { value: 'Claude', label: 'Claude' },
+  { value: 'ChatGPT', label: 'GPT-4o' },
+]
+
+export function TopBar({ brands, selectedBrand, onBrandChange, onExport, onRunScan, isScanning, scanMode, onScanModeChange, selectedModel, onModelChange }: TopBarProps) {
   const [open, setOpen] = useState(false)
   const [scanMenuOpen, setScanMenuOpen] = useState(false)
   const mode = SCAN_MODES[scanMode]
+  const selectedModelLabel = MODEL_OPTIONS.find(option => option.value === selectedModel)?.label ?? 'All models'
 
   return (
     <div className="h-11 min-h-[44px] border-b flex items-center justify-between px-4" style={{ borderBottomWidth: '0.5px' }}>
@@ -55,11 +65,23 @@ export function TopBar({ brands, selectedBrand, onBrandChange, onExport, onRunSc
         </div>
 
         <div className="flex items-center gap-1.5">
-          {['All tags', 'All models'].map(f => (
-            <span key={f} className="px-2 py-0.5 text-[11px] rounded-full bg-secondary text-secondary-foreground">
-              {f}
-            </span>
-          ))}
+          <span className="px-2 py-0.5 text-[11px] rounded-full bg-secondary text-secondary-foreground">All tags</span>
+          <div className="relative flex rounded-full bg-secondary p-0.5" aria-label="Model filter">
+            {MODEL_OPTIONS.map(option => (
+              <button
+                key={option.value}
+                onClick={() => onModelChange(option.value)}
+                className={`px-2 py-0.5 text-[11px] rounded-full transition-colors ${
+                  selectedModel === option.value ? 'bg-background text-foreground shadow-sm' : 'text-secondary-foreground hover:text-foreground'
+                }`}
+                aria-pressed={selectedModel === option.value}
+                title={`Show ${option.label} scores`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <span className="sr-only">Current model filter: {selectedModelLabel}</span>
         </div>
       </div>
 
