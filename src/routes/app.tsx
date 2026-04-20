@@ -44,18 +44,27 @@ function AppPage() {
   const [scanMode, setScanMode] = useState<ScanMode>('quick')
   const [activeScanDuration, setActiveScanDuration] = useState<number>(SCAN_MODES.quick.durationMs)
 
-  const handleRunScan = async (mode?: ScanMode) => {
+  const handleRunScan = async (
+    mode?: ScanMode,
+    scanData?: {
+      brands: typeof app.brands
+      attributes: typeof app.attributes
+      promptsList: typeof app.promptsList
+      selectedBrandId: string
+    }
+  ) => {
     const resolved: ScanMode = mode && SCAN_MODES[mode] ? mode : scanMode
     const cfg = SCAN_MODES[resolved]
+    const source = scanData ?? app
     setActiveScanDuration(cfg.durationMs)
     setIsScanning(true)
     try {
       const result = await runLiveScanFn({
         data: {
-          brands: app.brands,
-          attributes: app.attributes,
-          prompts: app.promptsList.slice(0, cfg.prompts),
-          selectedBrandId: app.selectedBrandId,
+          brands: source.brands,
+          attributes: source.attributes,
+          prompts: source.promptsList.slice(0, cfg.prompts),
+          selectedBrandId: source.selectedBrandId,
         },
       })
       setScanScores(result.scores)
@@ -75,7 +84,12 @@ function AppPage() {
           const { runScan, scanMode: chosenMode } = app.completeOnboarding(data)
           setScanMode(chosenMode)
           if (runScan) {
-            setTimeout(() => handleRunScan(chosenMode), 100)
+            void handleRunScan(chosenMode, {
+              brands: [data.ownBrand, ...data.competitors],
+              attributes: data.attributes,
+              promptsList: data.prompts,
+              selectedBrandId: data.ownBrand.id,
+            })
           }
         }}
       />

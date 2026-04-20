@@ -237,6 +237,9 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               <input
                 value={brandName}
                 onChange={e => setBrandName(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && brandName.trim()) setStep(1)
+                }}
                 placeholder="e.g. Acme Corp"
                 className="w-full px-3 py-2 text-sm bg-background border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
               />
@@ -420,6 +423,9 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 <input
                   value={category}
                   onChange={e => { setCategory(e.target.value); setEditingPrompts(false) }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && allPrompts.length > 0) setStep(4)
+                  }}
                   placeholder="e.g. CRM"
                   className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                 />
@@ -429,6 +435,9 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 <input
                   value={segment}
                   onChange={e => { setSegment(e.target.value); setEditingPrompts(false) }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && allPrompts.length > 0) setStep(4)
+                  }}
                   placeholder="e.g. SMEs"
                   className="w-full px-2.5 py-1.5 text-xs bg-background border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                 />
