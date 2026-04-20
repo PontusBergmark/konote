@@ -1,6 +1,6 @@
 import type { Brand, Attribute, ViewId } from '../types'
 import { currentScores } from '../data/scores'
-import { calculatePositioningPresence, getStrongestAttribute } from '../utils/scoring'
+import { calculatePositioningPresence } from '../utils/scoring'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip'
 
 interface SummaryBarProps {
@@ -24,7 +24,11 @@ const VIEW_INSIGHTS: Record<ViewId, (brand: Brand) => string> = {
 export function SummaryBar({ selectedBrand, attributes, currentView, scores = currentScores.scores }: SummaryBarProps) {
   const intendedIds = attributes.filter(a => a.isIntended && a.active).map(a => a.id)
   const presence = calculatePositioningPresence(selectedBrand.id, intendedIds, scores)
-  const strongest = getStrongestAttribute(scores)
+  const brandScores = scores[selectedBrand.id] ?? {}
+  const strongest = Object.entries(brandScores).reduce<{ attributeId: string; score: number } | null>(
+    (best, [attributeId, score]) => (!best || score > best.score ? { attributeId, score } : best),
+    null
+  )
 
   const strongestName = strongest
     ? attributes.find(a => a.id === strongest.attributeId)?.name ?? strongest.attributeId
@@ -46,7 +50,7 @@ export function SummaryBar({ selectedBrand, attributes, currentView, scores = cu
                   className="inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-medium text-muted-foreground hover:text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                   aria-label="Positioning signal explanation"
                 >
-                  ℹ
+                  <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full border border-current text-[9px] font-semibold leading-none">i</span>
                 </button>
               </TooltipTrigger>
               <TooltipContent className="max-w-64 leading-relaxed">
