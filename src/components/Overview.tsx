@@ -157,9 +157,7 @@ export function Overview({
   })
 
   const landingCount = intendedResults.filter(r => r.status === 'strong' || r.status === 'moderate').length
-  const biggestGap = intendedResults.length > 0
-    ? intendedResults.reduce((a, b) => (a.current <= b.current ? a : b))
-    : null
+  const biggestGap = [...intendedResults].sort((a, b) => a.current - b.current)[0] ?? null
 
   const competitors = brands.filter(b => b.id !== selectedBrand.id)
   const showComparison = competitors.length > 0
