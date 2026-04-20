@@ -24,8 +24,7 @@ export async function performLiveScan(data: ScanInput) {
   }
 
   const scanPrompt = buildScanPrompt(data.brands, activeAttributes, prompts)
-  const responses = (await Promise.all([callClaude(scanPrompt), callGpt4o(scanPrompt)]))
-    .filter((response) => response.trim().length > 0)
+  const responses = [await callClaude(scanPrompt)].filter((response) => response.trim().length > 0)
 
   if (responses.length === 0) {
     return { scores, responses: 0 }
@@ -58,28 +57,27 @@ function buildScanPrompt(brands: Brand[], attributes: Attribute[], prompts: Prom
 
 async function callClaude(prompt: string) {
   const apiKey = process.env.ANTHROPIC_API_KEY
-  if (!apiKey) return ''
+  if (!apiKey) throw new Error('ANTHROPIC_API_KEY is not configured')
+
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'anthropic-version': '2023-06-01', 'x-api-key': apiKey },
-    body: JSON.stringify({ model: 'claude-3-5-sonnet-latest', max_tokens: 1400, messages: [{ role: 'user', content: prompt }] }),
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1400,
+      temperature: 0,
+      messages: [{ role: 'user', content: prompt }],
+    }),
   })
-  if (!res.ok) return ''
-  const json = await res.json() as { content?: Array<{ text?: string }> }
-  return json.content?.map((part) => part.text ?? '').join('\n') ?? ''
-}
 
-async function callGpt4o(prompt: string) {
-  const apiKey = process.env.OPENAI_API_KEY
-  if (!apiKey) return ''
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({ model: 'gpt-4o', messages: [{ role: 'user', content: prompt }] }),
-  })
-  if (!res.ok) return ''
-  const json = await res.json() as { choices?: Array<{ message?: { content?: string } }> }
-  return json.choices?.[0]?.message?.content ?? ''
+  if (!res.ok) {
+    const body = await res.text()
+    console.error('Anthropic scan request failed', res.status, body)
+    throw new Error(`Anthropic scan request failed with status ${res.status}`)
+  }
+
+  const json = await res.json() as { content?: Array<{ type?: string; text?: string }> }
+  return json.content?.map((part) => part.text ?? '').join('\n') ?? ''
 }
 
 function parseScoreJson(raw: string): Record<string, Record<string, number>> | null {
