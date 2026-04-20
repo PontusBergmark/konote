@@ -1,5 +1,5 @@
-import type { Brand, Attribute } from '../types'
-import { currentScores, modelScores } from '../data/scores'
+import type { Brand, Attribute, ModelScoreMatrix } from '../types'
+import { currentScores, modelScores as seedModelScores } from '../data/scores'
 import { useState } from 'react'
 import { calculateShareOfVoice } from '../utils/scoring'
 import { brands as allBrands } from '../data/brands'
@@ -8,9 +8,10 @@ interface AssociationMapProps {
   brands: Brand[]
   attributes: Attribute[]
   scores?: Record<string, Record<string, number>>
+  modelScores?: ModelScoreMatrix
 }
 
-export function AssociationMap({ brands, attributes, scores = currentScores.scores }: AssociationMapProps) {
+export function AssociationMap({ brands, attributes, scores = currentScores.scores, modelScores = {} }: AssociationMapProps) {
   const [intendedOnly, setIntendedOnly] = useState(false)
   const [sortBy, setSortBy] = useState<string | null>(null)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
@@ -128,7 +129,8 @@ export function AssociationMap({ brands, attributes, scores = currentScores.scor
                   // Proportional alpha on a saturated teal — near-zero scores render almost white
                   const alphaPct = Math.round(pct * 100)
                   const bg = `color-mix(in oklch, var(--heatmap-base) ${alphaPct}%, transparent)`
-                  const models = modelScores[brand.id]?.[attr.id] ?? {}
+                  const chatgptScore = modelScores.ChatGPT?.[brand.id]?.[attr.id] ?? seedModelScores[brand.id]?.[attr.id]?.chatgpt ?? 0
+                  const claudeScore = modelScores.Claude?.[brand.id]?.[attr.id] ?? seedModelScores[brand.id]?.[attr.id]?.claude ?? 0
 
                   return (
                     <td key={attr.id} className="py-2.5 px-3">
@@ -140,13 +142,16 @@ export function AssociationMap({ brands, attributes, scores = currentScores.scor
                             </div>
                           </div>
                         </div>
-                        <div className="flex gap-1" title={`ChatGPT ${(models.chatgpt ?? 0) > 50 ? '✓' : '✗'} · Claude ${(models.claude ?? 0) > 50 ? '✓' : '✗'}`}>
-                          {['chatgpt', 'claude'].map(m => (
+                        <div className="flex gap-1" title={`ChatGPT ${chatgptScore} · Claude ${claudeScore}`}>
+                          {[
+                            ['ChatGPT', chatgptScore],
+                            ['Claude', claudeScore],
+                          ].map(([m, modelScore]) => (
                             <span
                               key={m}
                               className="w-1.5 h-1.5 rounded-full"
                               style={{
-                                backgroundColor: (models[m] ?? 0) > 50 ? 'var(--color-foreground)' : 'var(--color-border)',
+                                backgroundColor: Number(modelScore) > 50 ? 'var(--color-foreground)' : 'var(--color-border)',
                               }}
                             />
                           ))}
