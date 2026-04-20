@@ -63,7 +63,7 @@ async function callClaude(prompt: string) {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'anthropic-version': '2023-06-01', 'x-api-key': apiKey },
     body: JSON.stringify({
-      model: 'claude-3-5-sonnet-latest',
+      model: 'claude-3-5-sonnet-20241022',
       max_tokens: 1400,
       temperature: 0,
       messages: [{ role: 'user', content: prompt }],
