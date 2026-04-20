@@ -9,8 +9,8 @@ interface ScanProgressBarProps {
 
 const STAGES = [
   'Starting scan…',
-  'Calling Claude…',
-  'Averaging repeated runs…',
+  'Calling ChatGPT and Claude…',
+  'Separating model results…',
   'Scoring associations…',
   'Finalising results…',
 ]

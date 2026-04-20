@@ -2,6 +2,7 @@ export type PromptType = 'category' | 'competitor_anchored' | 'association_probe
 export type CoOccurrenceType = 'Competitor' | 'Category' | 'Concept' | 'Sub-brand' | 'Partner'
 export type Framing = 'Owned' | 'Compared' | 'Affiliated' | 'Emerging'
 export type TermStrength = 'strong' | 'moderate' | 'weak'
+export type ScanModel = 'ChatGPT' | 'Claude'
 export type ViewId = 'overview' | 'association-map' | 'attribute-scores' | 'co-occurrence' | 'positioning-probe' | 'prompts' | 'attributes' | 'settings'
 
 export interface Brand {
@@ -32,6 +33,9 @@ export interface PeriodScore {
   period: 'current' | 'previous'
   scores: Record<string, Record<string, number>>
 }
+
+export type ScoreMatrix = Record<string, Record<string, number>>
+export type ModelScoreMatrix = Partial<Record<ScanModel, ScoreMatrix>>
 
 export interface CoOccurrenceEntry {
   entity: string

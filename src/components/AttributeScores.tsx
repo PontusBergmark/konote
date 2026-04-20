@@ -1,4 +1,4 @@
-import type { Brand, Attribute } from '../types'
+import type { Brand, Attribute, ModelScoreMatrix, ScanModel } from '../types'
 import { currentScores } from '../data/scores'
 import { calculateShareOfVoice } from '../utils/scoring'
 
@@ -6,10 +6,14 @@ interface AttributeScoresProps {
   brands: Brand[]
   attributes: Attribute[]
   scores?: Record<string, Record<string, number>>
+  modelScores?: ModelScoreMatrix
 }
 
-export function AttributeScores({ brands, attributes, scores = currentScores.scores }: AttributeScoresProps) {
+const SCAN_MODELS: ScanModel[] = ['ChatGPT', 'Claude']
+
+export function AttributeScores({ brands, attributes, scores = currentScores.scores, modelScores = {} }: AttributeScoresProps) {
   const activeAttrs = attributes.filter(a => a.active)
+  const hasModelScores = SCAN_MODELS.some(model => Boolean(modelScores[model]))
 
   return (
     <div className="p-6 max-w-4xl">
@@ -56,6 +60,33 @@ export function AttributeScores({ brands, attributes, scores = currentScores.sco
                   </div>
                 ))}
               </div>
+              {hasModelScores && (
+                <div className="mt-3 grid gap-3 border-t border-border pt-3 sm:grid-cols-2">
+                  {SCAN_MODELS.map(model => {
+                    const modelRanked = brands
+                      .map(b => ({ brand: b, score: modelScores[model]?.[b.id]?.[attr.id] ?? 0 }))
+                      .sort((a, b) => b.score - a.score)
+
+                    return (
+                      <div key={model}>
+                        <p className="mb-1.5 text-[10px] font-medium uppercase text-muted-foreground">{model}</p>
+                        <div className="space-y-1">
+                          {modelRanked.map(r => (
+                            <div key={r.brand.id} className="flex items-center gap-2 text-[11px]">
+                              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: r.brand.color }} />
+                              <span className="w-20 text-foreground">{r.brand.name}</span>
+                              <div className="h-1.5 flex-1 rounded-full bg-secondary">
+                                <div className="h-full rounded-full" style={{ width: `${r.score}%`, backgroundColor: r.brand.color }} />
+                              </div>
+                              <span className="w-8 text-right text-muted-foreground">{r.score}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           )
         })}
