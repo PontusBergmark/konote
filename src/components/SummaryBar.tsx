@@ -1,7 +1,7 @@
 import type { Brand, Attribute, ViewId } from '../types'
 import { currentScores } from '../data/scores'
 import { calculatePositioningPresence, getStrongestAttribute } from '../utils/scoring'
-import { brands } from '../data/brands'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip'
 
 interface SummaryBarProps {
   selectedBrand: Brand
@@ -36,8 +36,25 @@ export function SummaryBar({ selectedBrand, attributes, currentView, scores = cu
     <div className="h-9 min-h-[36px] border-b flex items-center justify-between px-4 bg-surface-elevated" style={{ borderBottomWidth: '0.5px' }}>
       <p className="text-[11px] text-muted-foreground truncate max-w-[50%]">{insight}</p>
       <div className="flex items-center gap-4 text-[11px] text-muted-foreground whitespace-nowrap">
-        <span>
-          Positioning presence: <span className="font-medium text-foreground">{presence}%</span>
+        <span className="inline-flex items-center gap-1">
+          Positioning signal:
+          <TooltipProvider delayDuration={150}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-medium text-muted-foreground hover:text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                  aria-label="Positioning signal explanation"
+                >
+                  ℹ
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-64 leading-relaxed">
+                Average association strength across your intended attributes. Based on how consistently LLMs associate your brand with each attribute across this scan.
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <span className="font-medium text-foreground">{presence}%</span>
         </span>
         <span>
           Top attribute: <span className="font-medium text-foreground">{strongestName}</span>
