@@ -8,6 +8,7 @@ interface OverviewProps {
   brands: Brand[]
   selectedBrand: Brand
   attributes: Attribute[]
+  scores?: Record<string, Record<string, number>>
   onNavigate: (view: ViewId) => void
   onRunScan?: () => void
   isScanning?: boolean
@@ -86,6 +87,7 @@ export function Overview({
   brands,
   selectedBrand,
   attributes,
+  scores = currentScores.scores,
   onNavigate,
   onRunScan,
   isScanning,
@@ -96,7 +98,7 @@ export function Overview({
   const activeAttrs = attributes.filter(a => a.active)
   const [showSnapshot, setShowSnapshot] = useState(false)
   const intendedAttrs = activeAttrs.filter(a => a.isIntended)
-  const brandScores = currentScores.scores[selectedBrand.id] ?? {}
+  const brandScores = scores[selectedBrand.id] ?? {}
 
   // ---- Empty state: no scan yet ----
   if (!hasScanned) {
