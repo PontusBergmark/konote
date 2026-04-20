@@ -1,4 +1,4 @@
-import type { Attribute, Brand, Prompt } from '../types'
+import type { Attribute, Brand, ModelScoreMatrix, Prompt, ScanModel, ScoreMatrix } from '../types'
 
 export type ScanInput = {
   brands: Brand[]
@@ -7,78 +7,65 @@ export type ScanInput = {
   selectedBrandId: string
 }
 
-const RUNS_PER_PROMPT = 3
+const SCAN_MODELS: ScanModel[] = ['ChatGPT', 'Claude']
 
 export async function performLiveScan(data: ScanInput) {
   const activeAttributes = data.attributes.filter((attribute) => attribute.active).slice(0, 12)
   const prompts = data.prompts.slice(0, 15)
-  const scores: Record<string, Record<string, number>> = {}
-
-  data.brands.forEach((brand) => {
-    scores[brand.id] = {}
-    activeAttributes.forEach((attribute) => {
-      scores[brand.id][attribute.id] = 0
-    })
-  })
+  const scores = createEmptyScores(data.brands, activeAttributes)
+  const modelScores = SCAN_MODELS.reduce<ModelScoreMatrix>((acc, model) => {
+    acc[model] = createEmptyScores(data.brands, activeAttributes)
+    return acc
+  }, {})
 
   if (prompts.length === 0 || activeAttributes.length === 0 || data.brands.length === 0) {
-    return { scores, responses: 0 }
+    return { scores, modelScores, responses: 0 }
   }
 
-  let averagedPromptCount = 0
+  const completedPrompts: Record<ScanModel, number> = { ChatGPT: 0, Claude: 0 }
 
   for (const [index, prompt] of prompts.entries()) {
     const scanPrompt = buildScanPrompt(data.brands, activeAttributes, [prompt])
-    const promptScores = createEmptyScores(data.brands, activeAttributes)
-    let promptRuns = 0
-
-    for (let run = 1; run <= RUNS_PER_PROMPT; run += 1) {
-      const label = `prompt ${index + 1}/${prompts.length}, run ${run}/${RUNS_PER_PROMPT}`
+    for (const model of SCAN_MODELS) {
       const startedAt = Date.now()
-
-      console.log(`[scan] Anthropic API call starting for ${label}: ${prompt.text}`)
-      const response = await callClaude(scanPrompt)
-      console.log(`[scan] Anthropic API call completed for ${label} in ${Date.now() - startedAt}ms`)
-
+      console.log(`[scan] ${model} API call starting for prompt ${index + 1}/${prompts.length}: ${prompt.text}`)
+      const response = model === 'Claude' ? await callClaude(scanPrompt) : await callOpenAI(scanPrompt)
+      console.log(`[scan] ${model} API call completed for prompt ${index + 1}/${prompts.length} in ${Date.now() - startedAt}ms`)
       const parsed = parseScoreJson(response)
       if (!parsed) continue
-
-      promptRuns += 1
+      completedPrompts[model] += 1
       data.brands.forEach((brand) => {
         activeAttributes.forEach((attribute) => {
           const value = parsed[brand.name]?.[attribute.name]
           if (typeof value === 'number') {
-            promptScores[brand.id][attribute.id] += Math.max(0, Math.min(100, value))
+            modelScores[model]![brand.id][attribute.id] += Math.max(0, Math.min(100, value))
           }
         })
       })
     }
-
-    if (promptRuns === 0) continue
-
-    averagedPromptCount += 1
-    data.brands.forEach((brand) => {
-      activeAttributes.forEach((attribute) => {
-        scores[brand.id][attribute.id] += promptScores[brand.id][attribute.id] / promptRuns
-      })
-    })
-  }
-
-  if (averagedPromptCount === 0) {
-    return { scores, responses: 0 }
   }
 
   data.brands.forEach((brand) => {
     activeAttributes.forEach((attribute) => {
-      scores[brand.id][attribute.id] = Math.round(scores[brand.id][attribute.id] / averagedPromptCount)
+      let total = 0
+      let modelsWithScore = 0
+      SCAN_MODELS.forEach((model) => {
+        const count = completedPrompts[model]
+        if (count === 0) return
+        const averaged = Math.round(modelScores[model]![brand.id][attribute.id] / count)
+        modelScores[model]![brand.id][attribute.id] = averaged
+        total += averaged
+        modelsWithScore += 1
+      })
+      scores[brand.id][attribute.id] = modelsWithScore > 0 ? Math.round(total / modelsWithScore) : 0
     })
   })
 
-  return { scores, responses: averagedPromptCount }
+  return { scores, modelScores, responses: Math.max(...Object.values(completedPrompts)) }
 }
 
-function createEmptyScores(brands: Brand[], attributes: Attribute[]) {
-  const scores: Record<string, Record<string, number>> = {}
+function createEmptyScores(brands: Brand[], attributes: Attribute[]): ScoreMatrix {
+  const scores: ScoreMatrix = {}
   brands.forEach((brand) => {
     scores[brand.id] = {}
     attributes.forEach((attribute) => {
@@ -115,6 +102,31 @@ async function callClaude(prompt: string) {
 
   const json = await res.json() as { content?: Array<{ type?: string; text?: string }> }
   return json.content?.map((part) => part.text ?? '').join('\n') ?? ''
+}
+
+async function callOpenAI(prompt: string) {
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) throw new Error('OPENAI_API_KEY is not configured')
+
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      max_tokens: 1400,
+      temperature: 0,
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  })
+
+  if (!res.ok) {
+    const body = await res.text()
+    console.error('OpenAI scan request failed', res.status, body)
+    throw new Error(`OpenAI scan request failed with status ${res.status}`)
+  }
+
+  const json = await res.json() as { choices?: Array<{ message?: { content?: string } }> }
+  return json.choices?.map((choice) => choice.message?.content ?? '').join('\n') ?? ''
 }
 
 function parseScoreJson(raw: string): Record<string, Record<string, number>> | null {
