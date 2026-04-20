@@ -47,7 +47,12 @@ const runLiveScan = createServerFn({ method: 'POST' })
     }
 
     const scanPrompt = buildScanPrompt(data.brands, activeAttributes, prompts)
-    const responses = await Promise.all([callClaude(scanPrompt), callGpt4o(scanPrompt)])
+    const responses = (await Promise.all([callClaude(scanPrompt), callGpt4o(scanPrompt)]))
+      .filter((response) => response.trim().length > 0)
+
+    if (responses.length === 0) {
+      return { scores, responses: 0 }
+    }
 
     responses.forEach((response) => {
       const parsed = parseScoreJson(response)
