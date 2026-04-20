@@ -7,6 +7,7 @@ interface SummaryBarProps {
   selectedBrand: Brand
   attributes: Attribute[]
   currentView: ViewId
+  scores?: Record<string, Record<string, number>>
 }
 
 const VIEW_INSIGHTS: Record<ViewId, (brand: Brand) => string> = {
@@ -20,10 +21,10 @@ const VIEW_INSIGHTS: Record<ViewId, (brand: Brand) => string> = {
   settings: () => `Configure tracked brands and model preferences`,
 }
 
-export function SummaryBar({ selectedBrand, attributes, currentView }: SummaryBarProps) {
+export function SummaryBar({ selectedBrand, attributes, currentView, scores = currentScores.scores }: SummaryBarProps) {
   const intendedIds = attributes.filter(a => a.isIntended && a.active).map(a => a.id)
-  const presence = calculatePositioningPresence(selectedBrand.id, intendedIds, currentScores.scores)
-  const strongest = getStrongestAttribute(currentScores.scores)
+  const presence = calculatePositioningPresence(selectedBrand.id, intendedIds, scores)
+  const strongest = getStrongestAttribute(scores)
 
   const strongestName = strongest
     ? attributes.find(a => a.id === strongest.attributeId)?.name ?? strongest.attributeId

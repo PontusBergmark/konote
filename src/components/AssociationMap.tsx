@@ -7,9 +7,10 @@ import { brands as allBrands } from '../data/brands'
 interface AssociationMapProps {
   brands: Brand[]
   attributes: Attribute[]
+  scores?: Record<string, Record<string, number>>
 }
 
-export function AssociationMap({ brands, attributes }: AssociationMapProps) {
+export function AssociationMap({ brands, attributes, scores = currentScores.scores }: AssociationMapProps) {
   const [intendedOnly, setIntendedOnly] = useState(false)
   const [sortBy, setSortBy] = useState<string | null>(null)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
@@ -19,8 +20,8 @@ export function AssociationMap({ brands, attributes }: AssociationMapProps) {
 
   const sortedBrands = [...brands].sort((a, b) => {
     if (!sortBy) return 0
-    const sa = currentScores.scores[a.id]?.[sortBy] ?? 0
-    const sb = currentScores.scores[b.id]?.[sortBy] ?? 0
+    const sa = scores[a.id]?.[sortBy] ?? 0
+    const sb = scores[b.id]?.[sortBy] ?? 0
     return sortDir === 'desc' ? sb - sa : sa - sb
   })
 
@@ -36,14 +37,14 @@ export function AssociationMap({ brands, attributes }: AssociationMapProps) {
   const maxScore = 100
 
   const detailAttr = detailAttrId ? attributes.find(a => a.id === detailAttrId) : null
-  const sovData = detailAttrId ? calculateShareOfVoice(detailAttrId, currentScores.scores) : {}
+  const sovData = detailAttrId ? calculateShareOfVoice(detailAttrId, scores) : {}
 
   // ---- Auto-generated summary: highest and lowest non-zero cells in the visible grid ----
   type Cell = { brand: Brand; attr: Attribute; score: number }
   const cells: Cell[] = []
   for (const brand of brands) {
     for (const attr of visibleAttrs) {
-      const score = currentScores.scores[brand.id]?.[attr.id] ?? 0
+      const score = scores[brand.id]?.[attr.id] ?? 0
       cells.push({ brand, attr, score })
     }
   }
@@ -55,9 +56,9 @@ export function AssociationMap({ brands, attributes }: AssociationMapProps) {
     const leader = highest.brand
     let biggestGap: { attr: Attribute; leaderScore: number; winner: Brand; winnerScore: number } | null = null
     for (const attr of visibleAttrs) {
-      const leaderScore = currentScores.scores[leader.id]?.[attr.id] ?? 0
+      const leaderScore = scores[leader.id]?.[attr.id] ?? 0
       const ranked = brands
-        .map(b => ({ brand: b, score: currentScores.scores[b.id]?.[attr.id] ?? 0 }))
+        .map(b => ({ brand: b, score: scores[b.id]?.[attr.id] ?? 0 }))
         .sort((a, b) => b.score - a.score)
       const winner = ranked[0]
       if (winner.brand.id === leader.id) continue
@@ -122,7 +123,7 @@ export function AssociationMap({ brands, attributes }: AssociationMapProps) {
                   </div>
                 </td>
                 {visibleAttrs.map(attr => {
-                  const score = currentScores.scores[brand.id]?.[attr.id] ?? 0
+                  const score = scores[brand.id]?.[attr.id] ?? 0
                   const pct = Math.max(0, Math.min(1, score / maxScore))
                   // Proportional alpha on a saturated teal — near-zero scores render almost white
                   const alphaPct = Math.round(pct * 100)
@@ -180,7 +181,7 @@ export function AssociationMap({ brands, attributes }: AssociationMapProps) {
               .sort(([, a], [, b]) => b - a)
               .map(([brandId, share]) => {
                 const brand = brands.find(b => b.id === brandId)
-                const score = currentScores.scores[brandId]?.[detailAttr.id] ?? 0
+                const score = scores[brandId]?.[detailAttr.id] ?? 0
                 return (
                   <div key={brandId} className="space-y-1">
                     <div className="flex items-center justify-between text-xs">

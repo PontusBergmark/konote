@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { createFileRoute } from "@tanstack/react-router";
+import { createServerFn, useServerFn } from '@tanstack/react-start'
 import { Sidebar } from '../components/Sidebar'
 import { TopBar, SCAN_MODES, type ScanMode } from '../components/TopBar'
 import { SummaryBar } from '../components/SummaryBar'
@@ -17,6 +18,98 @@ import { useAppState } from '../hooks/useAppState'
 
 import { useTheme } from '../hooks/useTheme'
 import { useExport } from '../hooks/useExport'
+import { currentScores } from '../data/scores'
+import type { Attribute, Brand, Prompt } from '../types'
+
+type ScanInput = {
+  brands: Brand[]
+  attributes: Attribute[]
+  prompts: Prompt[]
+  selectedBrandId: string
+}
+
+const runLiveScan = createServerFn({ method: 'POST' })
+  .inputValidator((data: ScanInput) => data)
+  .handler(async ({ data }) => {
+    const activeAttributes = data.attributes.filter((attribute) => attribute.active).slice(0, 12)
+    const prompts = data.prompts.slice(0, 15)
+    const scores: Record<string, Record<string, number>> = {}
+
+    data.brands.forEach((brand) => {
+      scores[brand.id] = {}
+      activeAttributes.forEach((attribute) => {
+        scores[brand.id][attribute.id] = 0
+      })
+    })
+
+    if (prompts.length === 0 || activeAttributes.length === 0 || data.brands.length === 0) {
+      return { scores, responses: 0 }
+    }
+
+    const scanPrompt = buildScanPrompt(data.brands, activeAttributes, prompts)
+    const responses = await Promise.all([callClaude(scanPrompt), callGpt4o(scanPrompt)])
+
+    responses.forEach((response) => {
+      const parsed = parseScoreJson(response)
+      data.brands.forEach((brand) => {
+        activeAttributes.forEach((attribute) => {
+          const value = parsed?.[brand.name]?.[attribute.name]
+          if (typeof value === 'number') {
+            scores[brand.id][attribute.id] += Math.max(0, Math.min(100, value))
+          }
+        })
+      })
+    })
+
+    data.brands.forEach((brand) => {
+      activeAttributes.forEach((attribute) => {
+        scores[brand.id][attribute.id] = Math.round(scores[brand.id][attribute.id] / responses.length)
+      })
+    })
+
+    return { scores, responses: responses.length }
+  })
+
+function buildScanPrompt(brands: Brand[], attributes: Attribute[], prompts: Prompt[]) {
+  return `You are scoring brand associations in LLM answers. Use the research prompts below as the context being tested. Return ONLY valid JSON in this exact shape: {"scores":{"Brand name":{"Attribute name":0}}}. Scores are 0-100 for how strongly the model would associate that brand with that attribute across the prompts.\n\nBrands: ${brands.map((b) => b.name).join(', ')}\nAttributes: ${attributes.map((a) => a.name).join(', ')}\nPrompts:\n${prompts.map((p, i) => `${i + 1}. ${p.text}`).join('\n')}`
+}
+
+async function callClaude(prompt: string) {
+  const apiKey = process.env.ANTHROPIC_API_KEY
+  if (!apiKey) return ''
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'anthropic-version': '2023-06-01', 'x-api-key': apiKey },
+    body: JSON.stringify({ model: 'claude-3-5-sonnet-latest', max_tokens: 1400, messages: [{ role: 'user', content: prompt }] }),
+  })
+  if (!res.ok) return ''
+  const json = await res.json() as { content?: Array<{ text?: string }> }
+  return json.content?.map((part) => part.text ?? '').join('\n') ?? ''
+}
+
+async function callGpt4o(prompt: string) {
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) return ''
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({ model: 'gpt-4o', messages: [{ role: 'user', content: prompt }] }),
+  })
+  if (!res.ok) return ''
+  const json = await res.json() as { choices?: Array<{ message?: { content?: string } }> }
+  return json.choices?.[0]?.message?.content ?? ''
+}
+
+function parseScoreJson(raw: string): Record<string, Record<string, number>> | null {
+  const match = raw.match(/\{[\s\S]*\}/)
+  if (!match) return null
+  try {
+    const parsed = JSON.parse(match[0]) as { scores?: Record<string, Record<string, number>> }
+    return parsed.scores ?? null
+  } catch {
+    return null
+  }
+}
 
 export const Route = createFileRoute("/app")({
   component: AppPage,
@@ -30,24 +123,36 @@ export const Route = createFileRoute("/app")({
 
 function AppPage() {
   const app = useAppState()
+  const runLiveScanFn = useServerFn(runLiveScan)
   const { isDark, toggle: toggleTheme } = useTheme()
   const { exportView } = useExport()
   const [isScanning, setIsScanning] = useState(false)
   const [lastScannedAt, setLastScannedAt] = useState<Date | null>(null)
+  const [scanScores, setScanScores] = useState(currentScores.scores)
   const [scanMode, setScanMode] = useState<ScanMode>('quick')
   const [activeScanDuration, setActiveScanDuration] = useState<number>(SCAN_MODES.quick.durationMs)
 
-  const handleRunScan = (mode?: ScanMode) => {
+  const handleRunScan = async (mode?: ScanMode) => {
     const resolved: ScanMode = mode && SCAN_MODES[mode] ? mode : scanMode
     const cfg = SCAN_MODES[resolved]
     setActiveScanDuration(cfg.durationMs)
     setIsScanning(true)
-    const prompt = `Run a ${cfg.label.toLowerCase()} (${cfg.prompts} prompts) for ${app.selectedBrand?.name ?? 'brand'} across all tracked prompts and attributes. Return structured results for each attribute showing explicit mention frequency.`
-    console.log('[mock scan] sendPrompt:', prompt)
-    setTimeout(() => {
+    try {
+      const result = await runLiveScanFn({
+        data: {
+          brands: app.brands,
+          attributes: app.attributes,
+          prompts: app.promptsList.slice(0, cfg.prompts),
+          selectedBrandId: app.selectedBrandId,
+        },
+      })
+      setScanScores(result.scores)
       setIsScanning(false)
       setLastScannedAt(new Date())
-    }, cfg.durationMs)
+    } catch (error) {
+      console.error('Live scan failed', error)
+      setIsScanning(false)
+    }
   }
 
   if (app.showOnboarding) {
@@ -108,6 +213,7 @@ function AppPage() {
           selectedBrand={app.selectedBrand}
           attributes={app.attributes}
           currentView={app.currentView}
+          scores={scanScores}
         />
         <div className="flex-1 overflow-y-auto">
           {app.currentView === 'overview' && (
@@ -115,6 +221,7 @@ function AppPage() {
               brands={app.brands}
               selectedBrand={app.selectedBrand}
               attributes={app.attributes}
+              scores={scanScores}
               onNavigate={app.setCurrentView}
               onRunScan={handleRunScan}
               isScanning={isScanning}
@@ -138,10 +245,10 @@ function AppPage() {
             />
           )}
           {app.currentView === 'association-map' && (
-            <AssociationMap brands={app.brands} attributes={app.attributes} />
+            <AssociationMap brands={app.brands} attributes={app.attributes} scores={scanScores} />
           )}
           {app.currentView === 'attribute-scores' && (
-            <AttributeScores brands={app.brands} attributes={app.attributes} />
+            <AttributeScores brands={app.brands} attributes={app.attributes} scores={scanScores} />
           )}
           {app.currentView === 'co-occurrence' && (
             <CoOccurrence

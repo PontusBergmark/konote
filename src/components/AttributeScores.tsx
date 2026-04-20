@@ -5,9 +5,10 @@ import { calculateShareOfVoice } from '../utils/scoring'
 interface AttributeScoresProps {
   brands: Brand[]
   attributes: Attribute[]
+  scores?: Record<string, Record<string, number>>
 }
 
-export function AttributeScores({ brands, attributes }: AttributeScoresProps) {
+export function AttributeScores({ brands, attributes, scores = currentScores.scores }: AttributeScoresProps) {
   const activeAttrs = attributes.filter(a => a.active)
 
   return (
@@ -15,9 +16,9 @@ export function AttributeScores({ brands, attributes }: AttributeScoresProps) {
       <h2 className="text-sm font-medium text-foreground mb-4">Attribute scores</h2>
       <div className="space-y-6">
         {activeAttrs.map(attr => {
-          const sov = calculateShareOfVoice(attr.id, currentScores.scores)
+          const sov = calculateShareOfVoice(attr.id, scores)
           const ranked = brands
-            .map(b => ({ brand: b, score: currentScores.scores[b.id]?.[attr.id] ?? 0, share: sov[b.id] ?? 0 }))
+            .map(b => ({ brand: b, score: scores[b.id]?.[attr.id] ?? 0, share: sov[b.id] ?? 0 }))
             .sort((a, b) => b.score - a.score)
 
           return (
