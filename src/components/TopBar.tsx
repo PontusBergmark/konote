@@ -3,9 +3,11 @@ import type { Brand } from '../types'
 
 export type ScanMode = 'quick' | 'full'
 
+export const RUNS_PER_PROMPT = 3
+
 export const SCAN_MODES: Record<ScanMode, { label: string; prompts: number; seconds: number; durationMs: number }> = {
-  quick: { label: 'Quick scan', prompts: 9, seconds: 15, durationMs: 15000 },
-  full: { label: 'Full scan', prompts: 15, seconds: 25, durationMs: 25000 },
+  quick: { label: 'Quick scan', prompts: 9, seconds: 90, durationMs: 90000 },
+  full: { label: 'Full scan', prompts: 15, seconds: 150, durationMs: 150000 },
 }
 
 interface TopBarProps {
@@ -97,7 +99,7 @@ export function TopBar({ brands, selectedBrand, onBrandChange, onExport, onRunSc
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-foreground">{sm.label}</p>
                       <p className="text-[11px] text-muted-foreground">
-                        {sm.prompts} prompts · ~{sm.seconds} sec
+                        {sm.prompts} prompts × {RUNS_PER_PROMPT} runs · ~{Math.ceil(sm.seconds / 60)} min
                       </p>
                     </div>
                   </button>

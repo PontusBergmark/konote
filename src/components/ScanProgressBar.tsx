@@ -2,19 +2,20 @@ import { useEffect, useState } from 'react'
 
 interface ScanProgressBarProps {
   isScanning: boolean
-  /** Approx total scan duration in ms (matches the mock setTimeout) */
+  /** Approx total scan duration in ms */
   durationMs?: number
+  totalCalls?: number
 }
 
 const STAGES = [
-  'Sending prompts to ChatGPT…',
-  'Sending prompts to Claude…',
-  'Parsing responses…',
+  'Starting scan…',
+  'Calling Claude…',
+  'Averaging repeated runs…',
   'Scoring associations…',
   'Finalising results…',
 ]
 
-export function ScanProgressBar({ isScanning, durationMs = 2500 }: ScanProgressBarProps) {
+export function ScanProgressBar({ isScanning, durationMs = 90000, totalCalls = 0 }: ScanProgressBarProps) {
   const [progress, setProgress] = useState(0)
   const [done, setDone] = useState(false)
 
@@ -38,8 +39,8 @@ export function ScanProgressBar({ isScanning, durationMs = 2500 }: ScanProgressB
     const start = Date.now()
     const id = setInterval(() => {
       const elapsed = Date.now() - start
-      // Ease toward ~92% over duration; final jump happens when isScanning flips off
-      const target = Math.min(92, (elapsed / durationMs) * 100)
+      // Move steadily toward ~96% over the expected duration; final jump happens when isScanning flips off.
+      const target = Math.min(96, (elapsed / durationMs) * 96)
       setProgress(p => (target > p ? target : p))
     }, 80)
     return () => clearInterval(id)
@@ -49,6 +50,7 @@ export function ScanProgressBar({ isScanning, durationMs = 2500 }: ScanProgressB
   if (progress === 0) return null
 
   const stageIdx = Math.min(STAGES.length - 1, Math.floor((progress / 100) * STAGES.length))
+  const estimatedCall = Math.min(totalCalls, Math.max(1, Math.ceil((progress / 96) * totalCalls)))
   const label = done ? 'Scan complete' : STAGES[stageIdx]
 
   return (
@@ -62,7 +64,7 @@ export function ScanProgressBar({ isScanning, durationMs = 2500 }: ScanProgressB
     >
       <div className="flex items-center justify-between px-4 py-1.5 text-[11px]">
         <span className={done ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}>
-          {label}
+          {label} {totalCalls > 0 && !done ? `API call ${estimatedCall}/${totalCalls}` : ''} — this may take a couple of minutes.
         </span>
         <span className="tabular-nums text-muted-foreground">{Math.round(progress)}%</span>
       </div>

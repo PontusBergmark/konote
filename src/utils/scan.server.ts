@@ -7,6 +7,8 @@ export type ScanInput = {
   selectedBrandId: string
 }
 
+const RUNS_PER_PROMPT = 3
+
 export async function performLiveScan(data: ScanInput) {
   const activeAttributes = data.attributes.filter((attribute) => attribute.active).slice(0, 12)
   const prompts = data.prompts.slice(0, 15)
@@ -23,45 +25,67 @@ export async function performLiveScan(data: ScanInput) {
     return { scores, responses: 0 }
   }
 
-  const responses: string[] = []
+  let averagedPromptCount = 0
 
   for (const [index, prompt] of prompts.entries()) {
     const scanPrompt = buildScanPrompt(data.brands, activeAttributes, [prompt])
-    const label = `prompt ${index + 1}/${prompts.length}`
-    const startedAt = Date.now()
+    const promptScores = createEmptyScores(data.brands, activeAttributes)
+    let promptRuns = 0
 
-    console.log(`[scan] Anthropic API call starting for ${label}: ${prompt.text}`)
-    const response = await callClaude(scanPrompt)
-    console.log(`[scan] Anthropic API call completed for ${label} in ${Date.now() - startedAt}ms`)
+    for (let run = 1; run <= RUNS_PER_PROMPT; run += 1) {
+      const label = `prompt ${index + 1}/${prompts.length}, run ${run}/${RUNS_PER_PROMPT}`
+      const startedAt = Date.now()
 
-    if (response.trim().length > 0) {
-      responses.push(response)
+      console.log(`[scan] Anthropic API call starting for ${label}: ${prompt.text}`)
+      const response = await callClaude(scanPrompt)
+      console.log(`[scan] Anthropic API call completed for ${label} in ${Date.now() - startedAt}ms`)
+
+      const parsed = parseScoreJson(response)
+      if (!parsed) continue
+
+      promptRuns += 1
+      data.brands.forEach((brand) => {
+        activeAttributes.forEach((attribute) => {
+          const value = parsed[brand.name]?.[attribute.name]
+          if (typeof value === 'number') {
+            promptScores[brand.id][attribute.id] += Math.max(0, Math.min(100, value))
+          }
+        })
+      })
     }
+
+    if (promptRuns === 0) continue
+
+    averagedPromptCount += 1
+    data.brands.forEach((brand) => {
+      activeAttributes.forEach((attribute) => {
+        scores[brand.id][attribute.id] += promptScores[brand.id][attribute.id] / promptRuns
+      })
+    })
   }
 
-  if (responses.length === 0) {
+  if (averagedPromptCount === 0) {
     return { scores, responses: 0 }
   }
 
-  responses.forEach((response) => {
-    const parsed = parseScoreJson(response)
-    data.brands.forEach((brand) => {
-      activeAttributes.forEach((attribute) => {
-        const value = parsed?.[brand.name]?.[attribute.name]
-        if (typeof value === 'number') {
-          scores[brand.id][attribute.id] += Math.max(0, Math.min(100, value))
-        }
-      })
-    })
-  })
-
   data.brands.forEach((brand) => {
     activeAttributes.forEach((attribute) => {
-      scores[brand.id][attribute.id] = Math.round(scores[brand.id][attribute.id] / responses.length)
+      scores[brand.id][attribute.id] = Math.round(scores[brand.id][attribute.id] / averagedPromptCount)
     })
   })
 
-  return { scores, responses: responses.length }
+  return { scores, responses: averagedPromptCount }
+}
+
+function createEmptyScores(brands: Brand[], attributes: Attribute[]) {
+  const scores: Record<string, Record<string, number>> = {}
+  brands.forEach((brand) => {
+    scores[brand.id] = {}
+    attributes.forEach((attribute) => {
+      scores[brand.id][attribute.id] = 0
+    })
+  })
+  return scores
 }
 
 function buildScanPrompt(brands: Brand[], attributes: Attribute[], prompts: Prompt[]) {
