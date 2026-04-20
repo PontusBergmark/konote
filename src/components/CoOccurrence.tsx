@@ -1,10 +1,12 @@
-import type { Brand } from '../types'
+import type { Attribute, Brand, CoOccurrenceEntry, ScoreMatrix } from '../types'
 import { coOccurrenceData } from '../data/cooccurrence'
 import { useState } from 'react'
 import type { CoOccurrenceType } from '../types'
 
 interface CoOccurrenceProps {
   brands: Brand[]
+  attributes: Attribute[]
+  scores: ScoreMatrix
   selectedBrandId: string
   onBrandChange: (id: string) => void
 }
@@ -17,8 +19,10 @@ const TYPE_STYLES: Record<CoOccurrenceType, { bg: string; text: string }> = {
   Partner: { bg: 'var(--badge-partner-bg)', text: 'var(--badge-partner-text)' },
 }
 
-export function CoOccurrence({ brands, selectedBrandId, onBrandChange }: CoOccurrenceProps) {
-  const entries = coOccurrenceData[selectedBrandId] ?? []
+export function CoOccurrence({ brands, attributes, scores, selectedBrandId, onBrandChange }: CoOccurrenceProps) {
+  const entries = coOccurrenceData[selectedBrandId]?.length
+    ? coOccurrenceData[selectedBrandId]
+    : createScanCoOccurrences(brands, attributes, scores, selectedBrandId)
 
   return (
     <div className="p-6 max-w-5xl">
@@ -54,7 +58,7 @@ export function CoOccurrence({ brands, selectedBrandId, onBrandChange }: CoOccur
             </tr>
           </thead>
           <tbody>
-            {entries.sort((a, b) => b.frequency - a.frequency).map(entry => {
+            {[...entries].sort((a, b) => b.frequency - a.frequency).map(entry => {
               const style = TYPE_STYLES[entry.type]
               const delta = entry.delta
               const dir = Math.abs(delta) <= 0.1 ? 'stable' : delta > 0 ? 'positive' : 'negative'
@@ -97,4 +101,47 @@ export function CoOccurrence({ brands, selectedBrandId, onBrandChange }: CoOccur
       </div>
     </div>
   )
+}
+
+function createScanCoOccurrences(
+  brands: Brand[],
+  attributes: Attribute[],
+  scores: ScoreMatrix,
+  selectedBrandId: string
+): CoOccurrenceEntry[] {
+  const selectedScores = scores[selectedBrandId] ?? {}
+  const activeAttributes = attributes.filter(attribute => attribute.active)
+  const conceptEntries = activeAttributes
+    .map(attribute => ({
+      entity: attribute.name,
+      type: 'Concept' as const,
+      frequency: Math.round(selectedScores[attribute.id] ?? 0),
+      framing: attribute.isIntended ? 'Owned' as const : 'Emerging' as const,
+      delta: 0,
+    }))
+    .filter(entry => entry.frequency > 0)
+
+  const competitorEntries = brands
+    .filter(brand => brand.id !== selectedBrandId)
+    .map(brand => {
+      const competitorScores = scores[brand.id] ?? {}
+      const overlap = activeAttributes.length === 0
+        ? 0
+        : activeAttributes.reduce((total, attribute) => {
+          const selected = selectedScores[attribute.id] ?? 0
+          const competitor = competitorScores[attribute.id] ?? 0
+          return total + Math.max(0, Math.min(selected, competitor))
+        }, 0) / activeAttributes.length
+
+      return {
+        entity: brand.name,
+        type: 'Competitor' as const,
+        frequency: Math.round(overlap),
+        framing: 'Compared' as const,
+        delta: 0,
+      }
+    })
+    .filter(entry => entry.frequency > 0)
+
+  return [...competitorEntries, ...conceptEntries].slice(0, 12)
 }
