@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from '@tanstack/react-start'
 import { Sidebar } from '../components/Sidebar'
-import { TopBar, SCAN_MODES, MODELS_PER_PROMPT, type ScanMode } from '../components/TopBar'
+import { TopBar, SCAN_MODES, MODELS_PER_PROMPT, type ModelFilter, type ScanMode } from '../components/TopBar'
 import { SummaryBar } from '../components/SummaryBar'
 import { Overview } from '../components/Overview'
 import { AssociationMap } from '../components/AssociationMap'
@@ -18,9 +18,9 @@ import { useAppState } from '../hooks/useAppState'
 
 import { useTheme } from '../hooks/useTheme'
 import { useExport } from '../hooks/useExport'
-import { currentScores } from '../data/scores'
+import { currentScores, modelScores as seedModelScores } from '../data/scores'
 import { runLiveScan } from '../utils/scan.functions'
-import type { ModelScoreMatrix } from '../types'
+import type { Attribute, Brand, ModelScoreMatrix, ScanModel, ScoreMatrix } from '../types'
 
 export const Route = createFileRoute("/app")({
   component: AppPage,
@@ -42,7 +42,12 @@ function AppPage() {
   const [scanScores, setScanScores] = useState(currentScores.scores)
   const [scanModelScores, setScanModelScores] = useState<ModelScoreMatrix>({})
   const [scanMode, setScanMode] = useState<ScanMode>('quick')
+  const [selectedModel, setSelectedModel] = useState<ModelFilter>('All')
   const [activeScanDuration, setActiveScanDuration] = useState<number>(SCAN_MODES.quick.durationMs)
+  const filteredScores = getScoresForModel(selectedModel, scanScores, scanModelScores, app.brands, app.attributes)
+  const filteredModelScores = selectedModel === 'All'
+    ? scanModelScores
+    : ({ [selectedModel]: filteredScores } as ModelScoreMatrix)
 
   const handleRunScan = async (
     mode?: ScanMode,
@@ -134,6 +139,8 @@ function AppPage() {
           isScanning={isScanning}
           scanMode={scanMode}
           onScanModeChange={setScanMode}
+          selectedModel={selectedModel}
+          onModelChange={setSelectedModel}
         />
         <ScanProgressBar
           isScanning={isScanning}
@@ -144,7 +151,7 @@ function AppPage() {
           selectedBrand={app.selectedBrand}
           attributes={app.attributes}
           currentView={app.currentView}
-          scores={scanScores}
+          scores={filteredScores}
         />
         <div className="flex-1 overflow-y-auto">
           {app.currentView === 'overview' && (
@@ -152,7 +159,7 @@ function AppPage() {
               brands={app.brands}
               selectedBrand={app.selectedBrand}
               attributes={app.attributes}
-              scores={scanScores}
+              scores={filteredScores}
               onNavigate={app.setCurrentView}
               onRunScan={handleRunScan}
               isScanning={isScanning}
@@ -176,10 +183,10 @@ function AppPage() {
             />
           )}
           {app.currentView === 'association-map' && (
-              <AssociationMap brands={app.brands} attributes={app.attributes} scores={scanScores} modelScores={scanModelScores} />
+              <AssociationMap brands={app.brands} attributes={app.attributes} scores={filteredScores} modelScores={filteredModelScores} />
           )}
           {app.currentView === 'attribute-scores' && (
-            <AttributeScores brands={app.brands} attributes={app.attributes} scores={scanScores} modelScores={scanModelScores} />
+            <AttributeScores brands={app.brands} attributes={app.attributes} scores={filteredScores} modelScores={filteredModelScores} />
           )}
           {app.currentView === 'co-occurrence' && (
             <CoOccurrence
@@ -226,4 +233,26 @@ function AppPage() {
       </div>
     </div>
   )
+}
+
+function getScoresForModel(
+  selectedModel: ModelFilter,
+  scores: ScoreMatrix,
+  modelScores: ModelScoreMatrix,
+  brands: Brand[],
+  attributes: Attribute[]
+): ScoreMatrix {
+  if (selectedModel === 'All') return scores
+  return modelScores[selectedModel] ?? createSeedModelScoreMatrix(selectedModel, brands, attributes, scores)
+}
+
+function createSeedModelScoreMatrix(model: ScanModel, brands: Brand[], attributes: Attribute[], fallback: ScoreMatrix): ScoreMatrix {
+  const key = model === 'ChatGPT' ? 'chatgpt' : 'claude'
+  return brands.reduce<ScoreMatrix>((acc, brand) => {
+    acc[brand.id] = {}
+    attributes.forEach(attribute => {
+      acc[brand.id][attribute.id] = seedModelScores[brand.id]?.[attribute.id]?.[key] ?? fallback[brand.id]?.[attribute.id] ?? 0
+    })
+    return acc
+  }, {})
 }
