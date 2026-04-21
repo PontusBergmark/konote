@@ -1,8 +1,7 @@
 import type { Brand, Attribute, ModelScoreMatrix } from '../types'
 import { currentScores, modelScores as seedModelScores } from '../data/scores'
 import { useState } from 'react'
-import { calculateShareOfVoice } from '../utils/scoring'
-import { brands as allBrands } from '../data/brands'
+import { calculateShareOfVoice, isBelowNoiseFloor } from '../utils/scoring'
 import { ScanEmptyState } from './ScanEmptyState'
 import { AlertTriangle } from 'lucide-react'
 
@@ -145,15 +144,20 @@ export function AssociationMap({ brands, attributes, scores = currentScores.scor
                   const divergence = Math.abs(chatgptScore - claudeScore)
                   const lowConsensus = divergence >= 20
 
+                  const noSignal = isBelowNoiseFloor(score)
                   return (
                     <td key={attr.id} className="py-2.5 px-3">
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
-                          <div className="h-5 rounded-sm flex-1 max-w-[80px] relative" style={{ backgroundColor: bg }}>
-                            <div className="absolute inset-0 flex items-center justify-center text-[10px] font-medium" style={{ color: pct > 0.6 ? 'white' : 'var(--color-foreground)' }}>
-                              {score}
+                          {noSignal ? (
+                            <span className="text-[10px] text-muted-foreground italic">No signal</span>
+                          ) : (
+                            <div className="h-5 rounded-sm flex-1 max-w-[80px] relative" style={{ backgroundColor: bg }}>
+                              <div className="absolute inset-0 flex items-center justify-center text-[10px] font-medium" style={{ color: pct > 0.6 ? 'white' : 'var(--color-foreground)' }}>
+                                {score}
+                              </div>
                             </div>
-                          </div>
+                          )}
                           {lowConsensus && (
                             <span title={`Low consensus — ChatGPT ${chatgptScore} vs Claude ${claudeScore} (Δ${divergence})`}>
                               <AlertTriangle size={12} className="text-amber-500" />

@@ -1,6 +1,6 @@
 import type { Brand, Attribute, ModelScoreMatrix, ScanModel } from '../types'
 import { currentScores } from '../data/scores'
-import { calculateShareOfVoice } from '../utils/scoring'
+import { calculateShareOfVoice, isBelowNoiseFloor } from '../utils/scoring'
 import { ScanEmptyState } from './ScanEmptyState'
 
 interface AttributeScoresProps {
@@ -64,7 +64,7 @@ export function AttributeScores({ brands, attributes, scores = currentScores.sco
                     <div className="flex-1 bg-secondary rounded-full h-1.5">
                       <div className="h-full rounded-full" style={{ width: `${r.score}%`, backgroundColor: r.brand.color }} />
                     </div>
-                    <span className="text-muted-foreground w-8 text-right">{r.score}</span>
+                    <span className="text-muted-foreground w-8 text-right">{isBelowNoiseFloor(r.score) ? <span className="italic text-[9px]">—</span> : r.score}</span>
                     <span className="text-muted-foreground w-12 text-right">{Math.round(r.share)}% SoV</span>
                   </div>
                 ))}
@@ -87,7 +87,7 @@ export function AttributeScores({ brands, attributes, scores = currentScores.sco
                               <div className="h-1.5 flex-1 rounded-full bg-secondary">
                                 <div className="h-full rounded-full" style={{ width: `${r.score}%`, backgroundColor: r.brand.color }} />
                               </div>
-                              <span className="w-8 text-right text-muted-foreground">{r.score}</span>
+                              <span className="w-8 text-right text-muted-foreground">{isBelowNoiseFloor(r.score) ? <span className="italic text-[9px]">—</span> : r.score}</span>
                             </div>
                           ))}
                         </div>
