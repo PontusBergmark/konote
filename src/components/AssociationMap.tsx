@@ -3,21 +3,30 @@ import { currentScores, modelScores as seedModelScores } from '../data/scores'
 import { useState } from 'react'
 import { calculateShareOfVoice } from '../utils/scoring'
 import { brands as allBrands } from '../data/brands'
+import { ScanEmptyState } from './ScanEmptyState'
 
 interface AssociationMapProps {
   brands: Brand[]
   attributes: Attribute[]
   scores?: Record<string, Record<string, number>>
   modelScores?: ModelScoreMatrix
+  hasScanned?: boolean
+  onRunScan?: () => void
+  isScanning?: boolean
 }
 
-export function AssociationMap({ brands, attributes, scores = currentScores.scores, modelScores = {} }: AssociationMapProps) {
+export function AssociationMap({ brands, attributes, scores = currentScores.scores, modelScores = {}, hasScanned, onRunScan, isScanning }: AssociationMapProps) {
   const [intendedOnly, setIntendedOnly] = useState(false)
   const [sortBy, setSortBy] = useState<string | null>(null)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
   const [detailAttrId, setDetailAttrId] = useState<string | null>(null)
 
   const visibleAttrs = intendedOnly ? attributes.filter(a => a.isIntended && a.active) : attributes.filter(a => a.active)
+  const allZero = !hasScanned && visibleAttrs.every(attr => brands.every(b => (scores[b.id]?.[attr.id] ?? 0) === 0))
+  if (allZero) {
+    return <ScanEmptyState onRunScan={onRunScan} isScanning={isScanning} />
+  }
+
 
   const sortedBrands = [...brands].sort((a, b) => {
     if (!sortBy) return 0

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from '@tanstack/react-start'
+import { toast } from 'sonner'
 import { Sidebar } from '../components/Sidebar'
 import { TopBar, SCAN_MODES, MODELS_PER_PROMPT, type ModelFilter, type ScanMode } from '../components/TopBar'
 import { SummaryBar } from '../components/SummaryBar'
@@ -76,9 +77,12 @@ function AppPage() {
       setScanModelScores(result.modelScores ?? {})
       setIsScanning(false)
       setLastScannedAt(new Date())
+      const promptCount = SCAN_MODES[resolved].prompts
+      toast.success(`Scan complete — ${promptCount} prompts across 2 models`)
     } catch (error) {
       console.error('Live scan failed', error)
       setIsScanning(false)
+      toast.error('Scan failed — check your API keys and try again')
     }
   }
 
@@ -183,10 +187,10 @@ function AppPage() {
             />
           )}
           {app.currentView === 'association-map' && (
-              <AssociationMap brands={app.brands} attributes={app.attributes} scores={filteredScores} modelScores={filteredModelScores} />
+              <AssociationMap brands={app.brands} attributes={app.attributes} scores={filteredScores} modelScores={filteredModelScores} hasScanned={lastScannedAt !== null} onRunScan={() => handleRunScan()} isScanning={isScanning} />
           )}
           {app.currentView === 'attribute-scores' && (
-            <AttributeScores brands={app.brands} attributes={app.attributes} scores={filteredScores} modelScores={filteredModelScores} />
+            <AttributeScores brands={app.brands} attributes={app.attributes} scores={filteredScores} modelScores={filteredModelScores} hasScanned={lastScannedAt !== null} onRunScan={() => handleRunScan()} isScanning={isScanning} />
           )}
           {app.currentView === 'co-occurrence' && (
             <CoOccurrence
@@ -195,6 +199,9 @@ function AppPage() {
               scores={filteredScores}
               selectedBrandId={app.selectedBrandId}
               onBrandChange={app.setSelectedBrandId}
+              hasScanned={lastScannedAt !== null}
+              onRunScan={() => handleRunScan()}
+              isScanning={isScanning}
             />
           )}
           {app.currentView === 'positioning-probe' && (
