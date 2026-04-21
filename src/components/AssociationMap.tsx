@@ -27,7 +27,6 @@ export function AssociationMap({ brands, attributes, scores = currentScores.scor
     return <ScanEmptyState onRunScan={onRunScan} isScanning={isScanning} />
   }
 
-  const visibleAttrs = intendedOnly ? attributes.filter(a => a.isIntended && a.active) : attributes.filter(a => a.active)
 
   const sortedBrands = [...brands].sort((a, b) => {
     if (!sortBy) return 0
