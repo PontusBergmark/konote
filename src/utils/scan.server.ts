@@ -1,4 +1,5 @@
 import type { Attribute, Brand, ModelScoreMatrix, Prompt, ScanModel, ScoreMatrix } from '../types'
+import { supabaseAdmin } from '../integrations/supabase/client.server'
 
 export type ScanInput = {
   brands: Brand[]
