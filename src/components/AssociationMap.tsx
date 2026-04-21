@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { calculateShareOfVoice } from '../utils/scoring'
 import { brands as allBrands } from '../data/brands'
 import { ScanEmptyState } from './ScanEmptyState'
+import { AlertTriangle } from 'lucide-react'
 
 interface AssociationMapProps {
   brands: Brand[]
@@ -141,6 +142,9 @@ export function AssociationMap({ brands, attributes, scores = currentScores.scor
                   const chatgptScore = modelScores.ChatGPT?.[brand.id]?.[attr.id] ?? seedModelScores[brand.id]?.[attr.id]?.chatgpt ?? 0
                   const claudeScore = modelScores.Claude?.[brand.id]?.[attr.id] ?? seedModelScores[brand.id]?.[attr.id]?.claude ?? 0
 
+                  const divergence = Math.abs(chatgptScore - claudeScore)
+                  const lowConsensus = divergence >= 20
+
                   return (
                     <td key={attr.id} className="py-2.5 px-3">
                       <div className="flex flex-col gap-1">
@@ -150,6 +154,11 @@ export function AssociationMap({ brands, attributes, scores = currentScores.scor
                               {score}
                             </div>
                           </div>
+                          {lowConsensus && (
+                            <span title={`Low consensus — ChatGPT ${chatgptScore} vs Claude ${claudeScore} (Δ${divergence})`}>
+                              <AlertTriangle size={12} className="text-amber-500" />
+                            </span>
+                          )}
                         </div>
                         <div className="flex gap-1" title={`ChatGPT ${chatgptScore} · Claude ${claudeScore}`}>
                           {[
