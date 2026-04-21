@@ -187,10 +187,10 @@ function AppPage() {
             />
           )}
           {app.currentView === 'association-map' && (
-              <AssociationMap brands={app.brands} attributes={app.attributes} scores={filteredScores} modelScores={filteredModelScores} />
+              <AssociationMap brands={app.brands} attributes={app.attributes} scores={filteredScores} modelScores={filteredModelScores} hasScanned={lastScannedAt !== null} onRunScan={() => handleRunScan()} isScanning={isScanning} />
           )}
           {app.currentView === 'attribute-scores' && (
-            <AttributeScores brands={app.brands} attributes={app.attributes} scores={filteredScores} modelScores={filteredModelScores} />
+            <AttributeScores brands={app.brands} attributes={app.attributes} scores={filteredScores} modelScores={filteredModelScores} hasScanned={lastScannedAt !== null} onRunScan={() => handleRunScan()} isScanning={isScanning} />
           )}
           {app.currentView === 'co-occurrence' && (
             <CoOccurrence
@@ -199,6 +199,9 @@ function AppPage() {
               scores={filteredScores}
               selectedBrandId={app.selectedBrandId}
               onBrandChange={app.setSelectedBrandId}
+              hasScanned={lastScannedAt !== null}
+              onRunScan={() => handleRunScan()}
+              isScanning={isScanning}
             />
           )}
           {app.currentView === 'positioning-probe' && (
