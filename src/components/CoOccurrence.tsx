@@ -2,6 +2,7 @@ import type { Attribute, Brand, CoOccurrenceEntry, ScoreMatrix } from '../types'
 import { coOccurrenceData } from '../data/cooccurrence'
 import { useState } from 'react'
 import type { CoOccurrenceType } from '../types'
+import { ScanEmptyState } from './ScanEmptyState'
 
 interface CoOccurrenceProps {
   brands: Brand[]
@@ -9,6 +10,9 @@ interface CoOccurrenceProps {
   scores: ScoreMatrix
   selectedBrandId: string
   onBrandChange: (id: string) => void
+  hasScanned?: boolean
+  onRunScan?: () => void
+  isScanning?: boolean
 }
 
 const TYPE_STYLES: Record<CoOccurrenceType, { bg: string; text: string }> = {
@@ -19,10 +23,14 @@ const TYPE_STYLES: Record<CoOccurrenceType, { bg: string; text: string }> = {
   Partner: { bg: 'var(--badge-partner-bg)', text: 'var(--badge-partner-text)' },
 }
 
-export function CoOccurrence({ brands, attributes, scores, selectedBrandId, onBrandChange }: CoOccurrenceProps) {
+export function CoOccurrence({ brands, attributes, scores, selectedBrandId, onBrandChange, hasScanned, onRunScan, isScanning }: CoOccurrenceProps) {
   const entries = coOccurrenceData[selectedBrandId]?.length
     ? coOccurrenceData[selectedBrandId]
     : createScanCoOccurrences(brands, attributes, scores, selectedBrandId)
+
+  if (!hasScanned && entries.length === 0) {
+    return <ScanEmptyState onRunScan={onRunScan} isScanning={isScanning} />
+  }
 
   return (
     <div className="p-6 max-w-5xl">

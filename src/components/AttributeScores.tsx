@@ -1,17 +1,21 @@
 import type { Brand, Attribute, ModelScoreMatrix, ScanModel } from '../types'
 import { currentScores } from '../data/scores'
 import { calculateShareOfVoice } from '../utils/scoring'
+import { ScanEmptyState } from './ScanEmptyState'
 
 interface AttributeScoresProps {
   brands: Brand[]
   attributes: Attribute[]
   scores?: Record<string, Record<string, number>>
   modelScores?: ModelScoreMatrix
+  hasScanned?: boolean
+  onRunScan?: () => void
+  isScanning?: boolean
 }
 
 const SCAN_MODELS: ScanModel[] = ['ChatGPT', 'Claude']
 
-export function AttributeScores({ brands, attributes, scores = currentScores.scores, modelScores = {} }: AttributeScoresProps) {
+export function AttributeScores({ brands, attributes, scores = currentScores.scores, modelScores = {}, hasScanned, onRunScan, isScanning }: AttributeScoresProps) {
   const activeAttrs = attributes.filter(a => a.active)
   const hasModelScores = SCAN_MODELS.some(model => Boolean(modelScores[model]))
 

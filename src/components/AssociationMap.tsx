@@ -3,15 +3,19 @@ import { currentScores, modelScores as seedModelScores } from '../data/scores'
 import { useState } from 'react'
 import { calculateShareOfVoice } from '../utils/scoring'
 import { brands as allBrands } from '../data/brands'
+import { ScanEmptyState } from './ScanEmptyState'
 
 interface AssociationMapProps {
   brands: Brand[]
   attributes: Attribute[]
   scores?: Record<string, Record<string, number>>
   modelScores?: ModelScoreMatrix
+  hasScanned?: boolean
+  onRunScan?: () => void
+  isScanning?: boolean
 }
 
-export function AssociationMap({ brands, attributes, scores = currentScores.scores, modelScores = {} }: AssociationMapProps) {
+export function AssociationMap({ brands, attributes, scores = currentScores.scores, modelScores = {}, hasScanned, onRunScan, isScanning }: AssociationMapProps) {
   const [intendedOnly, setIntendedOnly] = useState(false)
   const [sortBy, setSortBy] = useState<string | null>(null)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
