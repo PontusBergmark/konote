@@ -1,8 +1,7 @@
 import type { Brand, Attribute, ModelScoreMatrix } from '../types'
 import { currentScores, modelScores as seedModelScores } from '../data/scores'
 import { useState } from 'react'
-import { calculateShareOfVoice, isBelowNoiseFloor, displayScore } from '../utils/scoring'
-import { brands as allBrands } from '../data/brands'
+import { calculateShareOfVoice, isBelowNoiseFloor } from '../utils/scoring'
 import { ScanEmptyState } from './ScanEmptyState'
 import { AlertTriangle } from 'lucide-react'
 

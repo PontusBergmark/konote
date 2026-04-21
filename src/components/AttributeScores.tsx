@@ -1,6 +1,6 @@
 import type { Brand, Attribute, ModelScoreMatrix, ScanModel } from '../types'
 import { currentScores } from '../data/scores'
-import { calculateShareOfVoice, isBelowNoiseFloor, displayScore } from '../utils/scoring'
+import { calculateShareOfVoice, isBelowNoiseFloor } from '../utils/scoring'
 import { ScanEmptyState } from './ScanEmptyState'
 
 interface AttributeScoresProps {
