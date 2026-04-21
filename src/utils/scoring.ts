@@ -3,6 +3,19 @@
  * All formulas from Applebaum brand association framework.
  */
 
+/** Scores below this threshold are treated as noise — displayed as "No signal". */
+export const NOISE_FLOOR = 20
+
+/** Returns true when a score is below the noise floor. */
+export function isBelowNoiseFloor(score: number): boolean {
+  return score < NOISE_FLOOR
+}
+
+/** Display label for a score: "No signal" when below noise floor. */
+export function displayScore(score: number): string {
+  return isBelowNoiseFloor(score) ? 'No signal' : String(score)
+}
+
 /**
  * Attribute score: % of runs where attribute explicitly mentioned.
  * In seed data we use pre-calculated scores directly.
