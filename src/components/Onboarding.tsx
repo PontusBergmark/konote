@@ -55,7 +55,6 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
   // Step 3 — Prompts
   const [category, setCategory] = useState('')
-  const [segment, setSegment] = useState('')
   const [enabledTypes, setEnabledTypes] = useState<Record<PromptType, boolean>>({
     category: true,
     competitor_anchored: true,
