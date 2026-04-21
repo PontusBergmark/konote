@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { calculateShareOfVoice } from '../utils/scoring'
 import { brands as allBrands } from '../data/brands'
 import { ScanEmptyState } from './ScanEmptyState'
+import { AlertTriangle } from 'lucide-react'
 
 interface AssociationMapProps {
   brands: Brand[]
