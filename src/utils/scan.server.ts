@@ -1,4 +1,5 @@
 import type { Attribute, Brand, ModelScoreMatrix, Prompt, ScanModel, ScoreMatrix } from '../types'
+import { supabaseAdmin } from '../integrations/supabase/client.server'
 
 export type ScanInput = {
   brands: Brand[]
@@ -60,6 +61,23 @@ export async function performLiveScan(data: ScanInput) {
       scores[brand.id][attribute.id] = modelsWithScore > 0 ? Math.round(total / modelsWithScore) : 0
     })
   })
+
+  // Track scan results in database
+  const selectedBrand = data.brands.find(b => b.id === data.selectedBrandId)
+  const brandName = selectedBrand?.name ?? data.selectedBrandId
+  for (const model of SCAN_MODELS) {
+    if (completedPrompts[model] > 0) {
+      try {
+        await supabaseAdmin.from('scans').insert({
+          brand: brandName,
+          model,
+          prompt_count: completedPrompts[model],
+        })
+      } catch (e) {
+        console.error(`[scan] Failed to record scan for ${model}:`, e)
+      }
+    }
+  }
 
   return { scores, modelScores, responses: Math.max(...Object.values(completedPrompts)) }
 }
