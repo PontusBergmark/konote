@@ -62,6 +62,23 @@ export async function performLiveScan(data: ScanInput) {
     })
   })
 
+  // Track scan results in database
+  const selectedBrand = data.brands.find(b => b.id === data.selectedBrandId)
+  const brandName = selectedBrand?.name ?? data.selectedBrandId
+  for (const model of SCAN_MODELS) {
+    if (completedPrompts[model] > 0) {
+      try {
+        await supabaseAdmin.from('scans').insert({
+          brand: brandName,
+          model,
+          prompt_count: completedPrompts[model],
+        })
+      } catch (e) {
+        console.error(`[scan] Failed to record scan for ${model}:`, e)
+      }
+    }
+  }
+
   return { scores, modelScores, responses: Math.max(...Object.values(completedPrompts)) }
 }
 
