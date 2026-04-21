@@ -22,6 +22,12 @@ export function AssociationMap({ brands, attributes, scores = currentScores.scor
   const [detailAttrId, setDetailAttrId] = useState<string | null>(null)
 
   const visibleAttrs = intendedOnly ? attributes.filter(a => a.isIntended && a.active) : attributes.filter(a => a.active)
+  const allZero = !hasScanned && visibleAttrs.every(attr => brands.every(b => (scores[b.id]?.[attr.id] ?? 0) === 0))
+  if (allZero) {
+    return <ScanEmptyState onRunScan={onRunScan} isScanning={isScanning} />
+  }
+
+  const visibleAttrs = intendedOnly ? attributes.filter(a => a.isIntended && a.active) : attributes.filter(a => a.active)
 
   const sortedBrands = [...brands].sort((a, b) => {
     if (!sortBy) return 0

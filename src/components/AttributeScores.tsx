@@ -19,6 +19,11 @@ export function AttributeScores({ brands, attributes, scores = currentScores.sco
   const activeAttrs = attributes.filter(a => a.active)
   const hasModelScores = SCAN_MODELS.some(model => Boolean(modelScores[model]))
 
+  const allZero = !hasScanned && activeAttrs.every(attr => brands.every(b => (scores[b.id]?.[attr.id] ?? 0) === 0))
+  if (allZero) {
+    return <ScanEmptyState onRunScan={onRunScan} isScanning={isScanning} />
+  }
+
   return (
     <div className="p-6 max-w-4xl">
       <h2 className="text-sm font-medium text-foreground mb-4">Attribute scores</h2>
