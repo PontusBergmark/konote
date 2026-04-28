@@ -177,3 +177,63 @@ function parseScoreJson(raw: string): Record<string, Record<string, number>> | n
     return null
   }
 }
+function buildDescriptivePrompt(brands: Brand[], prompt: Prompt) {
+  const brandNames = brands.map(b => b.name).join(', ')
+  return `Answer the following research prompt naturally and thoroughly, as you would for a user evaluating these brands: ${brandNames}.
+
+For each brand you mention, describe its strengths, characteristics, and what it is known for in 2-4 sentences. Use natural prose (no bullet lists, no JSON). Mention each brand by name explicitly.
+
+Prompt: ${prompt.text}`
+}
+
+function collectExcerpts(
+  store: ScanExcerpts,
+  rawText: string,
+  model: ScanModel,
+  promptText: string,
+  brands: Brand[],
+  attributes: Attribute[],
+) {
+  // Sentence-split (simple, handles most cases)
+  const sentences = rawText
+    .replace(/\s+/g, ' ')
+    .split(/(?<=[.!?])\s+(?=[A-Z"'(])/)
+    .map(s => s.trim())
+    .filter(s => s.length >= 20 && s.length <= 400)
+
+  for (const brand of brands) {
+    const brandRe = new RegExp(`\\b${escapeRegex(brand.name)}\\b`, 'i')
+    for (const attribute of attributes) {
+      const keywords = attributeKeywords(attribute)
+      // Find first sentence that mentions both brand and one of the attribute keywords
+      for (const sentence of sentences) {
+        if (!brandRe.test(sentence)) continue
+        const matched = keywords.find(kw => new RegExp(`\\b${escapeRegex(kw)}\\b`, 'i').test(sentence))
+        if (!matched) continue
+        if (!store[brand.id][attribute.id]) store[brand.id][attribute.id] = []
+        const list = store[brand.id][attribute.id]
+        // Cap at 2 per brand/attr, prefer diverse models
+        if (list.length >= 2) break
+        if (list.some(e => e.model === model)) break
+        list.push({ text: sentence, model, prompt: promptText, highlight: matched })
+        break
+      }
+    }
+  }
+}
+
+function attributeKeywords(attribute: Attribute): string[] {
+  const out = new Set<string>()
+  const name = attribute.name.trim()
+  if (name) out.add(name)
+  // Split multi-word names into tokens >= 4 chars
+  name.split(/[\s\-_/]+/).forEach(tok => {
+    const t = tok.toLowerCase().replace(/[^a-z0-9]/g, '')
+    if (t.length >= 4) out.add(t)
+  })
+  return Array.from(out)
+}
+
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
