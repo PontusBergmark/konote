@@ -46,6 +46,7 @@ export function PositioningProbe({ brands, attributes, onAddAttribute }: Positio
         },
       })
       setResult(data)
+      setActiveCompetitorId(competitorBrands[0]?.id ?? null)
       toast.success(`Probe complete — ${data.responses} responses across ${competitorBrands.length} competitor pair${competitorBrands.length === 1 ? '' : 's'}`)
     } catch (e) {
       console.error(e)
