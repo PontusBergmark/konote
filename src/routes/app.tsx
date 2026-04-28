@@ -42,6 +42,7 @@ function AppPage() {
   const [lastScannedAt, setLastScannedAt] = useState<Date | null>(null)
   const [scanScores, setScanScores] = useState(currentScores.scores)
   const [scanModelScores, setScanModelScores] = useState<ModelScoreMatrix>({})
+  const [scanExcerpts, setScanExcerpts] = useState<import('../utils/scan.server').ScanExcerpts>({})
   const [scanMode, setScanMode] = useState<ScanMode>('quick')
   const [selectedModel, setSelectedModel] = useState<ModelFilter>('All')
   const [activeScanDuration, setActiveScanDuration] = useState<number>(SCAN_MODES.quick.durationMs)
@@ -75,6 +76,7 @@ function AppPage() {
       })
       setScanScores(result.scores)
       setScanModelScores(result.modelScores ?? {})
+      setScanExcerpts(result.excerpts ?? {})
       setIsScanning(false)
       setLastScannedAt(new Date())
       const promptCount = SCAN_MODES[resolved].prompts
@@ -164,6 +166,7 @@ function AppPage() {
               selectedBrand={app.selectedBrand}
               attributes={app.attributes}
               scores={filteredScores}
+              excerpts={scanExcerpts}
               onNavigate={app.setCurrentView}
               onRunScan={handleRunScan}
               isScanning={isScanning}

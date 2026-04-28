@@ -1,6 +1,16 @@
 import type { Attribute, Brand, ModelScoreMatrix, Prompt, ScanModel, ScoreMatrix } from '../types'
 import { supabaseAdmin } from '../integrations/supabase/client.server'
 
+export type ScanExcerpt = {
+  text: string
+  model: ScanModel
+  prompt: string
+  highlight: string
+}
+
+// brandId -> attributeId -> excerpts
+export type ScanExcerpts = Record<string, Record<string, ScanExcerpt[]>>
+
 export type ScanInput = {
   brands: Brand[]
   attributes: Attribute[]
@@ -18,31 +28,41 @@ export async function performLiveScan(data: ScanInput) {
     acc[model] = createEmptyScores(data.brands, activeAttributes)
     return acc
   }, {})
+  const excerpts: ScanExcerpts = {}
+  data.brands.forEach((b) => { excerpts[b.id] = {} })
 
   if (prompts.length === 0 || activeAttributes.length === 0 || data.brands.length === 0) {
-    return { scores, modelScores, responses: 0 }
+    return { scores, modelScores, excerpts, responses: 0 }
   }
 
   const completedPrompts: Record<ScanModel, number> = { ChatGPT: 0, Claude: 0 }
 
   for (const [index, prompt] of prompts.entries()) {
     const scanPrompt = buildScanPrompt(data.brands, activeAttributes, [prompt])
+    const descriptivePrompt = buildDescriptivePrompt(data.brands, prompt)
     for (const model of SCAN_MODELS) {
       const startedAt = Date.now()
       console.log(`[scan] ${model} API call starting for prompt ${index + 1}/${prompts.length}: ${prompt.text}`)
-      const response = model === 'Claude' ? await callClaude(scanPrompt) : await callOpenAI(scanPrompt)
+      const [scoreResp, descResp] = await Promise.all([
+        model === 'Claude' ? callClaude(scanPrompt) : callOpenAI(scanPrompt),
+        model === 'Claude' ? callClaude(descriptivePrompt) : callOpenAI(descriptivePrompt),
+      ])
       console.log(`[scan] ${model} API call completed for prompt ${index + 1}/${prompts.length} in ${Date.now() - startedAt}ms`)
-      const parsed = parseScoreJson(response)
-      if (!parsed) continue
-      completedPrompts[model] += 1
-      data.brands.forEach((brand) => {
-        activeAttributes.forEach((attribute) => {
-          const value = parsed[brand.name]?.[attribute.name]
-          if (typeof value === 'number') {
-            modelScores[model]![brand.id][attribute.id] += Math.max(0, Math.min(100, value))
-          }
+      const parsed = parseScoreJson(scoreResp)
+      if (parsed) {
+        completedPrompts[model] += 1
+        data.brands.forEach((brand) => {
+          activeAttributes.forEach((attribute) => {
+            const value = parsed[brand.name]?.[attribute.name]
+            if (typeof value === 'number') {
+              modelScores[model]![brand.id][attribute.id] += Math.max(0, Math.min(100, value))
+            }
+          })
         })
-      })
+      }
+      if (descResp) {
+        collectExcerpts(excerpts, descResp, model, prompt.text, data.brands, activeAttributes)
+      }
     }
   }
 
@@ -79,7 +99,7 @@ export async function performLiveScan(data: ScanInput) {
     }
   }
 
-  return { scores, modelScores, responses: Math.max(...Object.values(completedPrompts)) }
+  return { scores, modelScores, excerpts, responses: Math.max(...Object.values(completedPrompts)) }
 }
 
 function createEmptyScores(brands: Brand[], attributes: Attribute[]): ScoreMatrix {
@@ -156,4 +176,64 @@ function parseScoreJson(raw: string): Record<string, Record<string, number>> | n
   } catch {
     return null
   }
+}
+function buildDescriptivePrompt(brands: Brand[], prompt: Prompt) {
+  const brandNames = brands.map(b => b.name).join(', ')
+  return `Answer the following research prompt naturally and thoroughly, as you would for a user evaluating these brands: ${brandNames}.
+
+For each brand you mention, describe its strengths, characteristics, and what it is known for in 2-4 sentences. Use natural prose (no bullet lists, no JSON). Mention each brand by name explicitly.
+
+Prompt: ${prompt.text}`
+}
+
+function collectExcerpts(
+  store: ScanExcerpts,
+  rawText: string,
+  model: ScanModel,
+  promptText: string,
+  brands: Brand[],
+  attributes: Attribute[],
+) {
+  // Sentence-split (simple, handles most cases)
+  const sentences = rawText
+    .replace(/\s+/g, ' ')
+    .split(/(?<=[.!?])\s+(?=[A-Z"'(])/)
+    .map(s => s.trim())
+    .filter(s => s.length >= 20 && s.length <= 400)
+
+  for (const brand of brands) {
+    const brandRe = new RegExp(`\\b${escapeRegex(brand.name)}\\b`, 'i')
+    for (const attribute of attributes) {
+      const keywords = attributeKeywords(attribute)
+      // Find first sentence that mentions both brand and one of the attribute keywords
+      for (const sentence of sentences) {
+        if (!brandRe.test(sentence)) continue
+        const matched = keywords.find(kw => new RegExp(`\\b${escapeRegex(kw)}\\b`, 'i').test(sentence))
+        if (!matched) continue
+        if (!store[brand.id][attribute.id]) store[brand.id][attribute.id] = []
+        const list = store[brand.id][attribute.id]
+        // Cap at 2 per brand/attr, prefer diverse models
+        if (list.length >= 2) break
+        if (list.some(e => e.model === model)) break
+        list.push({ text: sentence, model, prompt: promptText, highlight: matched })
+        break
+      }
+    }
+  }
+}
+
+function attributeKeywords(attribute: Attribute): string[] {
+  const out = new Set<string>()
+  const name = attribute.name.trim()
+  if (name) out.add(name)
+  // Split multi-word names into tokens >= 4 chars
+  name.split(/[\s\-_/]+/).forEach(tok => {
+    const t = tok.toLowerCase().replace(/[^a-z0-9]/g, '')
+    if (t.length >= 4) out.add(t)
+  })
+  return Array.from(out)
+}
+
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
