@@ -42,6 +42,7 @@ function AppPage() {
   const [lastScannedAt, setLastScannedAt] = useState<Date | null>(null)
   const [scanScores, setScanScores] = useState(currentScores.scores)
   const [scanModelScores, setScanModelScores] = useState<ModelScoreMatrix>({})
+  const [scanExcerpts, setScanExcerpts] = useState<import('../utils/scan.server').ScanExcerpts>({})
   const [scanMode, setScanMode] = useState<ScanMode>('quick')
   const [selectedModel, setSelectedModel] = useState<ModelFilter>('All')
   const [activeScanDuration, setActiveScanDuration] = useState<number>(SCAN_MODES.quick.durationMs)
