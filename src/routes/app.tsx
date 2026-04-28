@@ -166,6 +166,7 @@ function AppPage() {
               selectedBrand={app.selectedBrand}
               attributes={app.attributes}
               scores={filteredScores}
+              excerpts={scanExcerpts}
               onNavigate={app.setCurrentView}
               onRunScan={handleRunScan}
               isScanning={isScanning}
