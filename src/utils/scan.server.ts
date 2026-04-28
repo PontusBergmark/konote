@@ -28,31 +28,41 @@ export async function performLiveScan(data: ScanInput) {
     acc[model] = createEmptyScores(data.brands, activeAttributes)
     return acc
   }, {})
+  const excerpts: ScanExcerpts = {}
+  data.brands.forEach((b) => { excerpts[b.id] = {} })
 
   if (prompts.length === 0 || activeAttributes.length === 0 || data.brands.length === 0) {
-    return { scores, modelScores, responses: 0 }
+    return { scores, modelScores, excerpts, responses: 0 }
   }
 
   const completedPrompts: Record<ScanModel, number> = { ChatGPT: 0, Claude: 0 }
 
   for (const [index, prompt] of prompts.entries()) {
     const scanPrompt = buildScanPrompt(data.brands, activeAttributes, [prompt])
+    const descriptivePrompt = buildDescriptivePrompt(data.brands, prompt)
     for (const model of SCAN_MODELS) {
       const startedAt = Date.now()
       console.log(`[scan] ${model} API call starting for prompt ${index + 1}/${prompts.length}: ${prompt.text}`)
-      const response = model === 'Claude' ? await callClaude(scanPrompt) : await callOpenAI(scanPrompt)
+      const [scoreResp, descResp] = await Promise.all([
+        model === 'Claude' ? callClaude(scanPrompt) : callOpenAI(scanPrompt),
+        model === 'Claude' ? callClaude(descriptivePrompt) : callOpenAI(descriptivePrompt),
+      ])
       console.log(`[scan] ${model} API call completed for prompt ${index + 1}/${prompts.length} in ${Date.now() - startedAt}ms`)
-      const parsed = parseScoreJson(response)
-      if (!parsed) continue
-      completedPrompts[model] += 1
-      data.brands.forEach((brand) => {
-        activeAttributes.forEach((attribute) => {
-          const value = parsed[brand.name]?.[attribute.name]
-          if (typeof value === 'number') {
-            modelScores[model]![brand.id][attribute.id] += Math.max(0, Math.min(100, value))
-          }
+      const parsed = parseScoreJson(scoreResp)
+      if (parsed) {
+        completedPrompts[model] += 1
+        data.brands.forEach((brand) => {
+          activeAttributes.forEach((attribute) => {
+            const value = parsed[brand.name]?.[attribute.name]
+            if (typeof value === 'number') {
+              modelScores[model]![brand.id][attribute.id] += Math.max(0, Math.min(100, value))
+            }
+          })
         })
-      })
+      }
+      if (descResp) {
+        collectExcerpts(excerpts, descResp, model, prompt.text, data.brands, activeAttributes)
+      }
     }
   }
 
@@ -89,7 +99,7 @@ export async function performLiveScan(data: ScanInput) {
     }
   }
 
-  return { scores, modelScores, responses: Math.max(...Object.values(completedPrompts)) }
+  return { scores, modelScores, excerpts, responses: Math.max(...Object.values(completedPrompts)) }
 }
 
 function createEmptyScores(brands: Brand[], attributes: Attribute[]): ScoreMatrix {
