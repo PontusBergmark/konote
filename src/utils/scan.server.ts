@@ -1,6 +1,16 @@
 import type { Attribute, Brand, ModelScoreMatrix, Prompt, ScanModel, ScoreMatrix } from '../types'
 import { supabaseAdmin } from '../integrations/supabase/client.server'
 
+export type ScanExcerpt = {
+  text: string
+  model: ScanModel
+  prompt: string
+  highlight: string
+}
+
+// brandId -> attributeId -> excerpts
+export type ScanExcerpts = Record<string, Record<string, ScanExcerpt[]>>
+
 export type ScanInput = {
   brands: Brand[]
   attributes: Attribute[]
