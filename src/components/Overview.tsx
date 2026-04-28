@@ -90,6 +90,7 @@ export function Overview({
   selectedBrand,
   attributes,
   scores = currentScores.scores,
+  excerpts,
   onNavigate,
   onRunScan,
   isScanning,
@@ -101,6 +102,7 @@ export function Overview({
   const [showSnapshot, setShowSnapshot] = useState(false)
   const intendedAttrs = activeAttrs.filter(a => a.isIntended)
   const brandScores = scores[selectedBrand.id] ?? {}
+  const brandExcerpts = excerpts?.[selectedBrand.id] ?? {}
 
   // ---- Empty state: no scan yet ----
   if (!hasScanned) {
