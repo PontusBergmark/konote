@@ -1,8 +1,11 @@
 import { useState } from 'react'
+import { useServerFn } from '@tanstack/react-start'
+import { toast } from 'sonner'
 import type { Brand, Attribute } from '../types'
-import { positioningProbeResults } from '../data/positioning'
 import { AssociationPill } from './AssociationPill'
 import { ScanProgressBar } from './ScanProgressBar'
+import { runPositioningProbe } from '../utils/probe.functions'
+import type { ProbeResult, ProbeTerm } from '../utils/probe.server'
 
 interface PositioningProbeProps {
   brands: Brand[]
@@ -10,31 +13,46 @@ interface PositioningProbeProps {
   onAddAttribute: (name: string) => void
 }
 
-const PROBE_DURATION_MS = 8000
-
 export function PositioningProbe({ brands, attributes, onAddAttribute }: PositioningProbeProps) {
   const [primaryBrandId, setPrimaryBrandId] = useState(brands[0]?.id ?? '')
   const [selectedCompetitors, setSelectedCompetitors] = useState<string[]>(
     brands.filter(b => b.id !== (brands[0]?.id ?? '')).map(b => b.id)
   )
-  const [selectedModel, setSelectedModel] = useState('All')
-  const [showResults, setShowResults] = useState(true)
+  const [selectedModel, setSelectedModel] = useState<'ChatGPT' | 'Claude' | 'All'>('All')
   const [isProbing, setIsProbing] = useState(false)
+  const [result, setResult] = useState<ProbeResult | null>(null)
 
-  const handleRunProbe = () => {
-    if (isProbing) return
-    setShowResults(false)
-    setIsProbing(true)
-    setTimeout(() => {
-      setIsProbing(false)
-      setShowResults(true)
-    }, PROBE_DURATION_MS)
-  }
+  const runProbeFn = useServerFn(runPositioningProbe)
 
   const primaryBrand = brands.find(b => b.id === primaryBrandId) ?? brands[0]
   const availableCompetitors = brands.filter(b => b.id !== primaryBrandId)
 
-  const result = positioningProbeResults[0]
+  const handleRunProbe = async () => {
+    if (isProbing || !primaryBrand) return
+    const competitorBrands = brands.filter(b => selectedCompetitors.includes(b.id))
+    if (competitorBrands.length === 0) {
+      toast.error('Select at least one competitor')
+      return
+    }
+    setIsProbing(true)
+    setResult(null)
+    try {
+      const data = await runProbeFn({
+        data: {
+          primaryBrand,
+          competitors: competitorBrands,
+          model: selectedModel,
+        },
+      })
+      setResult(data)
+      toast.success(`Probe complete — ${data.responses} responses across ${competitorBrands.length} competitor pair${competitorBrands.length === 1 ? '' : 's'}`)
+    } catch (e) {
+      console.error(e)
+      toast.error('Probe failed. Check API keys and try again.')
+    } finally {
+      setIsProbing(false)
+    }
+  }
 
   const toggleCompetitor = (id: string) => {
     setSelectedCompetitors(prev =>
@@ -53,6 +71,8 @@ export function PositioningProbe({ brands, attributes, onAddAttribute }: Positio
     .filter(Boolean)
     .join(', ')
 
+  const probeDurationMs = Math.max(8000, selectedCompetitors.length * (selectedModel === 'All' ? 18000 : 9000))
+
   return (
     <div className="p-6 max-w-6xl">
       <h2 className="text-sm font-medium text-foreground mb-1">Positioning probe</h2>
@@ -60,7 +80,6 @@ export function PositioningProbe({ brands, attributes, onAddAttribute }: Positio
         See how LLMs actually position your brand against competitors — what they describe as uniquely yours, what they hand to rivals, and where you blend into the category.
       </p>
 
-      {/* Configuration */}
       <div className="bg-card border border-border rounded-lg p-4 mb-6 space-y-3">
         <div className="grid grid-cols-3 gap-4">
           <div>
@@ -98,7 +117,7 @@ export function PositioningProbe({ brands, attributes, onAddAttribute }: Positio
           <div>
             <label className="text-[10px] text-muted-foreground uppercase tracking-wide block mb-1">Model</label>
             <div className="flex gap-1">
-              {['ChatGPT', 'Claude', 'All'].map(m => (
+              {(['ChatGPT', 'Claude', 'All'] as const).map(m => (
                 <button
                   key={m}
                   onClick={() => setSelectedModel(m)}
@@ -113,13 +132,12 @@ export function PositioningProbe({ brands, attributes, onAddAttribute }: Positio
           </div>
         </div>
 
-        {/* Explanatory text — replaces the old prompt template block */}
         <p className="text-xs text-muted-foreground leading-relaxed">
-          We'll ask ChatGPT and Claude what makes{' '}
+          We'll ask {selectedModel === 'All' ? 'ChatGPT and Claude' : selectedModel} differentiation prompts comparing{' '}
           <span className="font-medium text-foreground">{primaryBrand?.name ?? 'your brand'}</span>{' '}
-          distinct from{' '}
+          against{' '}
           <span className="font-medium text-foreground">{competitorNames || 'selected competitors'}</span>{' '}
-          — based only on how these brands are described and perceived.
+          — fresh API calls, not reused scan data.
         </p>
 
         <button
@@ -131,13 +149,17 @@ export function PositioningProbe({ brands, attributes, onAddAttribute }: Positio
         </button>
       </div>
 
-      <ScanProgressBar isScanning={isProbing} durationMs={PROBE_DURATION_MS} />
+      <ScanProgressBar isScanning={isProbing} durationMs={probeDurationMs} />
 
-      {/* Results */}
-      {showResults && result && (
+      {!isProbing && !result && (
+        <div className="bg-card border border-dashed border-border rounded-lg p-8 text-center">
+          <p className="text-xs text-muted-foreground">Run a probe to see what makes {primaryBrand?.name ?? 'your brand'} distinct.</p>
+        </div>
+      )}
+
+      {result && primaryBrand && (
         <div>
           <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${2 + selectedCompetitors.length}, 1fr)` }}>
-            {/* Unique to primary */}
             <div className="bg-card border border-border rounded-lg overflow-hidden">
               <div
                 className="px-3 py-2 text-[11px] font-medium"
@@ -149,7 +171,10 @@ export function PositioningProbe({ brands, attributes, onAddAttribute }: Positio
                 Unique to {primaryBrand.name}
               </div>
               <div className="p-3 flex flex-wrap gap-1.5">
-                {result.uniqueToPrimary.map(t => {
+                {result.uniqueToPrimary.length === 0 && (
+                  <span className="text-[10px] text-muted-foreground italic">No distinct terms surfaced</span>
+                )}
+                {result.uniqueToPrimary.map((t: ProbeTerm) => {
                   const id = t.term.toLowerCase().replace(/\s+/g, '-')
                   const isAdded = attributes.some(a => a.id === id && a.isIntended)
                   return (
@@ -168,7 +193,6 @@ export function PositioningProbe({ brands, attributes, onAddAttribute }: Positio
               </div>
             </div>
 
-            {/* Competitor columns */}
             {selectedCompetitors.map(compId => {
               const comp = brands.find(b => b.id === compId)
               if (!comp) return null
@@ -185,6 +209,9 @@ export function PositioningProbe({ brands, attributes, onAddAttribute }: Positio
                     Unique to {comp.name}
                   </div>
                   <div className="p-3 flex flex-wrap gap-1.5">
+                    {terms.length === 0 && (
+                      <span className="text-[10px] text-muted-foreground italic">—</span>
+                    )}
                     {terms.map(t => (
                       <AssociationPill
                         key={t.term}
@@ -198,12 +225,14 @@ export function PositioningProbe({ brands, attributes, onAddAttribute }: Positio
               )
             })}
 
-            {/* Shared */}
             <div className="bg-card border border-border rounded-lg overflow-hidden">
               <div className="px-3 py-2 text-[11px] font-medium bg-secondary text-secondary-foreground">
                 Shared
               </div>
               <div className="p-3 flex flex-wrap gap-1.5">
+                {result.shared.length === 0 && (
+                  <span className="text-[10px] text-muted-foreground italic">—</span>
+                )}
                 {result.shared.map(t => (
                   <AssociationPill
                     key={t.term}
@@ -216,17 +245,13 @@ export function PositioningProbe({ brands, attributes, onAddAttribute }: Positio
             </div>
           </div>
 
-          {/* Auto-generated insight */}
           <div className="mt-4 bg-card border border-border rounded-lg p-4">
             <p className="text-[11px] text-muted-foreground leading-relaxed">
               <span className="font-medium text-foreground">{primaryBrand.name}</span>'s LLM-encoded differentiation centres on{' '}
-              <span className="font-medium">{result.uniqueToPrimary.filter(t => t.strength === 'strong').slice(0, 3).map(t => t.term).join(', ')}</span>.{' '}
-              {selectedCompetitors.slice(0, 2).map(compId => {
-                const comp = brands.find(b => b.id === compId)
-                const terms = result.uniqueToCompetitors[compId]?.filter(t => t.strength === 'strong').slice(0, 3).map(t => t.term).join(', ')
-                return comp && terms ? `${comp.name}'s unique territory is ${terms}. ` : ''
-              }).join('')}
-              Shared space — {result.shared.filter(t => t.strength === 'strong').map(t => t.term).join(', ')} — represents category parity, not differentiation.
+              <span className="font-medium">
+                {result.uniqueToPrimary.filter(t => t.strength !== 'weak').slice(0, 3).map(t => t.term).join(', ') || '—'}
+              </span>.{' '}
+              Shared space — {result.shared.filter(t => t.strength !== 'weak').slice(0, 3).map(t => t.term).join(', ') || 'none surfaced'} — represents category parity, not differentiation.
             </p>
           </div>
         </div>
