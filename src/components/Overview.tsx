@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Brand, Attribute, ViewId } from '../types'
+import type { ScanExcerpts } from '../utils/scan.server'
 import { currentScores } from '../data/scores'
 import { coOccurrenceData } from '../data/cooccurrence'
 import { ShareSnapshot } from './ShareSnapshot'
@@ -9,6 +10,7 @@ interface OverviewProps {
   selectedBrand: Brand
   attributes: Attribute[]
   scores?: Record<string, Record<string, number>>
+  excerpts?: ScanExcerpts
   onNavigate: (view: ViewId) => void
   onRunScan?: () => void
   isScanning?: boolean
