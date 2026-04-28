@@ -15,7 +15,7 @@ export function AssociationPill({ term, strength, color, bgColor, onAdd, frequen
 
   return (
     <span
-      className="inline-flex items-center gap-1 pl-2 pr-2 py-0.5 rounded-full text-[11px] font-medium relative"
+      className="group inline-flex items-center gap-1 pl-2 pr-2 py-0.5 rounded-full text-[11px] font-medium relative"
       style={{
         backgroundColor: bgColor ?? 'var(--color-secondary)',
         color: color ?? 'var(--color-secondary-foreground)',
@@ -27,7 +27,7 @@ export function AssociationPill({ term, strength, color, bgColor, onAdd, frequen
     >
       {term}
       {(strength === 'moderate' || strength === 'weak') && frequencyBadge !== undefined && (
-        <span className="text-[9px] opacity-70">{frequencyBadge}</span>
+        <span className="text-[9px] opacity-0 group-hover:opacity-70 transition-opacity">{frequencyBadge}</span>
       )}
       {!added && onAdd && (
         <button onClick={onAdd} className="ml-0.5 hover:opacity-70 text-[10px]" title="Track as intended">+</button>
