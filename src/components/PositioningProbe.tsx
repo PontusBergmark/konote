@@ -21,6 +21,7 @@ export function PositioningProbe({ brands, attributes, onAddAttribute }: Positio
   const [selectedModel, setSelectedModel] = useState<'ChatGPT' | 'Claude' | 'All'>('All')
   const [isProbing, setIsProbing] = useState(false)
   const [result, setResult] = useState<ProbeResult | null>(null)
+  const [activeCompetitorId, setActiveCompetitorId] = useState<string | null>(null)
 
   const runProbeFn = useServerFn(runPositioningProbe)
 
