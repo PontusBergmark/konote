@@ -85,7 +85,18 @@ function promptTypeForEntity(type: string): { label: string; tone: string } {
   }
 }
 
-export function Overview({
+function renderExcerpt(text: string, highlight: string) {
+  if (!highlight) return text
+  const escaped = highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const parts = text.split(new RegExp(`(${escaped})`, 'i'))
+  return parts.map((part, i) =>
+    part.toLowerCase() === highlight.toLowerCase()
+      ? <strong key={i} className="font-semibold text-foreground">{part}</strong>
+      : <span key={i}>{part}</span>
+  )
+}
+
+
   brands,
   selectedBrand,
   attributes,
