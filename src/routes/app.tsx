@@ -76,6 +76,7 @@ function AppPage() {
       })
       setScanScores(result.scores)
       setScanModelScores(result.modelScores ?? {})
+      setScanExcerpts(result.excerpts ?? {})
       setIsScanning(false)
       setLastScannedAt(new Date())
       const promptCount = SCAN_MODES[resolved].prompts
