@@ -159,10 +159,10 @@ export function PositioningProbe({ brands, attributes, onAddAttribute }: Positio
 
       {result && primaryBrand && (
         <div>
-          <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${2 + selectedCompetitors.length}, 1fr)` }}>
+          <div className="grid gap-4 md:grid-cols-2">
             <div className="bg-card border border-border rounded-lg overflow-hidden">
               <div
-                className="px-3 py-2 text-[11px] font-medium"
+                className="px-4 py-2.5 text-[11px] font-medium"
                 style={{
                   backgroundColor: `color-mix(in srgb, var(--color-primary) 10%, transparent)`,
                   color: 'var(--color-primary)',
@@ -170,7 +170,7 @@ export function PositioningProbe({ brands, attributes, onAddAttribute }: Positio
               >
                 Unique to {primaryBrand.name}
               </div>
-              <div className="p-3 flex flex-wrap gap-1.5">
+              <div className="p-5 flex flex-wrap gap-2.5">
                 {result.uniqueToPrimary.length === 0 && (
                   <span className="text-[10px] text-muted-foreground italic">No distinct terms surfaced</span>
                 )}
@@ -193,43 +193,11 @@ export function PositioningProbe({ brands, attributes, onAddAttribute }: Positio
               </div>
             </div>
 
-            {selectedCompetitors.map(compId => {
-              const comp = brands.find(b => b.id === compId)
-              if (!comp) return null
-              const terms = result.uniqueToCompetitors[compId] ?? []
-              return (
-                <div key={compId} className="bg-card border border-border rounded-lg overflow-hidden">
-                  <div
-                    className="px-3 py-2 text-[11px] font-medium"
-                    style={{
-                      backgroundColor: `color-mix(in srgb, ${comp.color} 10%, transparent)`,
-                      color: comp.color,
-                    }}
-                  >
-                    Unique to {comp.name}
-                  </div>
-                  <div className="p-3 flex flex-wrap gap-1.5">
-                    {terms.length === 0 && (
-                      <span className="text-[10px] text-muted-foreground italic">—</span>
-                    )}
-                    {terms.map(t => (
-                      <AssociationPill
-                        key={t.term}
-                        term={t.term}
-                        strength={t.strength}
-                        frequencyBadge={getStrengthBadge(t.strength)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )
-            })}
-
             <div className="bg-card border border-border rounded-lg overflow-hidden">
-              <div className="px-3 py-2 text-[11px] font-medium bg-secondary text-secondary-foreground">
+              <div className="px-4 py-2.5 text-[11px] font-medium bg-secondary text-secondary-foreground">
                 Shared
               </div>
-              <div className="p-3 flex flex-wrap gap-1.5">
+              <div className="p-5 flex flex-wrap gap-2.5">
                 {result.shared.length === 0 && (
                   <span className="text-[10px] text-muted-foreground italic">—</span>
                 )}
@@ -244,6 +212,65 @@ export function PositioningProbe({ brands, attributes, onAddAttribute }: Positio
               </div>
             </div>
           </div>
+
+          {selectedCompetitors.length > 0 && (
+            <div className="mt-6">
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Competitor view</span>
+                {selectedCompetitors.map(compId => {
+                  const comp = brands.find(b => b.id === compId)
+                  if (!comp) return null
+                  const active = activeCompetitorId === compId
+                  return (
+                    <button
+                      key={compId}
+                      onClick={() => setActiveCompetitorId(compId)}
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium transition-colors ${
+                        active ? 'bg-foreground text-background' : 'bg-secondary text-secondary-foreground hover:bg-secondary/70'
+                      }`}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: comp.color }} />
+                      {comp.name}
+                    </button>
+                  )
+                })}
+              </div>
+              {(() => {
+                const activeId = activeCompetitorId && selectedCompetitors.includes(activeCompetitorId)
+                  ? activeCompetitorId
+                  : selectedCompetitors[0]
+                const comp = brands.find(b => b.id === activeId)
+                if (!comp) return null
+                const terms = result.uniqueToCompetitors[comp.id] ?? []
+                return (
+                  <div className="bg-card border border-border rounded-lg overflow-hidden">
+                    <div
+                      className="px-4 py-2.5 text-[11px] font-medium"
+                      style={{
+                        backgroundColor: `color-mix(in srgb, ${comp.color} 10%, transparent)`,
+                        color: comp.color,
+                      }}
+                    >
+                      Unique to {comp.name}
+                    </div>
+                    <div className="p-5 flex flex-wrap gap-2.5">
+                      {terms.length === 0 && (
+                        <span className="text-[10px] text-muted-foreground italic">—</span>
+                      )}
+                      {terms.map(t => (
+                        <AssociationPill
+                          key={t.term}
+                          term={t.term}
+                          strength={t.strength}
+                          frequencyBadge={getStrengthBadge(t.strength)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )
+              })()}
+            </div>
+          )}
 
           <div className="mt-4 bg-card border border-border rounded-lg p-4">
             <p className="text-[11px] text-muted-foreground leading-relaxed">
