@@ -95,8 +95,7 @@ function renderExcerpt(text: string, highlight: string) {
       : <span key={i}>{part}</span>
   )
 }
-
-
+export function Overview({
   brands,
   selectedBrand,
   attributes,
