@@ -456,7 +456,7 @@ export function Overview({
             </p>
             <div className="space-y-1.5">
               {brands.map(b => {
-                const bScores = currentScores.scores[b.id] ?? {}
+                const bScores = scores[b.id] ?? {}
                 const intendedIds = intendedAttrs.map(a => a.id)
                 const avg = intendedIds.length > 0
                   ? intendedIds.reduce((acc, id) => acc + (bScores[id] ?? 0), 0) / intendedIds.length
