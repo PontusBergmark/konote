@@ -27,7 +27,7 @@ export function AssociationPill({ term, strength, color, bgColor, onAdd, frequen
     >
       {term}
       {(strength === 'moderate' || strength === 'weak') && frequencyBadge !== undefined && (
-        <span className="text-[9px] opacity-70">{frequencyBadge}</span>
+        <span className="text-[9px] opacity-0 group-hover:opacity-70 transition-opacity">{frequencyBadge}</span>
       )}
       {!added && onAdd && (
         <button onClick={onAdd} className="ml-0.5 hover:opacity-70 text-[10px]" title="Track as intended">+</button>
