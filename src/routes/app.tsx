@@ -25,6 +25,9 @@ import type { Attribute, Brand, ModelScoreMatrix, ScanModel, ScoreMatrix } from 
 
 export const Route = createFileRoute("/app")({
   component: AppPage,
+  validateSearch: (search: Record<string, unknown>) => ({
+    brand: typeof search.brand === 'string' ? search.brand : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Konote — App" },
@@ -34,6 +37,7 @@ export const Route = createFileRoute("/app")({
 });
 
 function AppPage() {
+  const { brand: initialBrandName } = Route.useSearch()
   const app = useAppState()
   const runLiveScanFn = useServerFn(runLiveScan)
   const { isDark, toggle: toggleTheme } = useTheme()
