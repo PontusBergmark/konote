@@ -4,6 +4,7 @@ import { SCAN_MODES, type ScanMode } from './TopBar'
 
 interface OnboardingProps {
   onComplete: (data: { ownBrand: Brand; competitors: Brand[]; prompts: Prompt[]; attributes: Attribute[]; runScan: boolean; scanMode: ScanMode }) => void
+  initialBrandName?: string
 }
 
 const SWATCHES = ['#FF5C35', '#00A1E0', '#1A1A2E', '#E42527', '#1A3C5E', '#6C3EF4', '#10B981', '#F59E0B']
@@ -37,11 +38,11 @@ const SUGGESTED_ATTRIBUTES = [
   'Customer support', 'Security', 'Speed', 'Design quality',
 ]
 
-export function Onboarding({ onComplete }: OnboardingProps) {
+export function Onboarding({ onComplete, initialBrandName }: OnboardingProps) {
   const [step, setStep] = useState(0)
 
   // Step 0 — Brand
-  const [brandName, setBrandName] = useState('')
+  const [brandName, setBrandName] = useState(initialBrandName ?? '')
   const [brandColor, setBrandColor] = useState(SWATCHES[0])
 
   // Step 1 — Competitors
