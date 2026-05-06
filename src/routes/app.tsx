@@ -95,6 +95,7 @@ function AppPage() {
   if (app.showOnboarding) {
     return (
       <Onboarding
+        initialBrandName={initialBrandName}
         onComplete={(data) => {
           const { runScan, scanMode: chosenMode } = app.completeOnboarding(data)
           setScanMode(chosenMode)
