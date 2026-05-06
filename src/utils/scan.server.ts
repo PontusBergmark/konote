@@ -186,6 +186,43 @@ For each brand you mention, describe its strengths, characteristics, and what it
 Prompt: ${prompt.text}`
 }
 
+function scoreSentence(sentence: string, brandName: string, keyword: string): number {
+  let score = 0
+  const lower = sentence.toLowerCase()
+  const brandLower = brandName.toLowerCase()
+  const kwLower = keyword.toLowerCase()
+  const brandIdx = lower.indexOf(brandLower)
+  const kwIdx = lower.indexOf(kwLower)
+  if (brandIdx === -1 || kwIdx === -1) return -Infinity
+
+  // Brand as subject: at start, or followed by descriptive verb
+  const subjectRe = new RegExp(`\\b${escapeRegex(brandName)}\\b\\s+(is|are|has|have|offers|provides|delivers|excels|focuses|specializes|stands|leads|features|brings|combines|emphasizes|prioritizes|enables|supports|allows|comes|remains|continues|was|were|gives|makes|known|recognized|considered|regarded|built|designed|trusted)\\b`, 'i')
+  if (subjectRe.test(sentence)) score += 10
+  // Brand near start
+  if (brandIdx <= 5) score += 5
+  else if (brandIdx <= 30) score += 2
+
+  // "known for", "is known for its X"
+  if (/\bknown for\b|\brenowned for\b|\brecognized for\b|\bfamous for\b|\bnoted for\b/i.test(sentence)) score += 4
+
+  // Penalize conditional / hypothetical / comparative-aside phrasing
+  if (/^(if|when|whether|should|suppose)\b/i.test(sentence)) score -= 6
+  if (/\b(if you|might|could|may|depending|consider|suppose)\b/i.test(sentence)) score -= 3
+  if (/\?$/.test(sentence)) score -= 4
+
+  // Keyword close to brand mention
+  const dist = Math.abs(brandIdx - kwIdx)
+  if (dist < 40) score += 3
+  else if (dist < 100) score += 1
+
+  // Prefer concise sentences
+  if (sentence.length < 180) score += 1
+  if (sentence.length > 280) score -= 1
+
+  // Multiple other brand names mentioned suggests comparative aside (mild penalty handled by caller)
+  return score
+}
+
 function collectExcerpts(
   store: ScanExcerpts,
   rawText: string,
@@ -194,7 +231,6 @@ function collectExcerpts(
   brands: Brand[],
   attributes: Attribute[],
 ) {
-  // Sentence-split (simple, handles most cases)
   const sentences = rawText
     .replace(/\s+/g, ' ')
     .split(/(?<=[.!?])\s+(?=[A-Z"'(])/)
@@ -205,18 +241,30 @@ function collectExcerpts(
     const brandRe = new RegExp(`\\b${escapeRegex(brand.name)}\\b`, 'i')
     for (const attribute of attributes) {
       const keywords = attributeKeywords(attribute)
-      // Find first sentence that mentions both brand and one of the attribute keywords
+      let best: { sentence: string; keyword: string; score: number } | null = null
       for (const sentence of sentences) {
         if (!brandRe.test(sentence)) continue
-        const matched = keywords.find(kw => new RegExp(`\\b${escapeRegex(kw)}\\b`, 'i').test(sentence))
-        if (!matched) continue
-        if (!store[brand.id][attribute.id]) store[brand.id][attribute.id] = []
-        const list = store[brand.id][attribute.id]
-        // Cap at 2 per brand/attr, prefer diverse models
-        if (list.length >= 2) break
-        if (list.some(e => e.model === model)) break
-        list.push({ text: sentence, model, prompt: promptText, highlight: matched })
-        break
+        // Penalize sentences that mention many other brands (likely comparative)
+        const otherBrandHits = brands.filter(b => b.id !== brand.id && new RegExp(`\\b${escapeRegex(b.name)}\\b`, 'i').test(sentence)).length
+        for (const kw of keywords) {
+          if (!new RegExp(`\\b${escapeRegex(kw)}\\b`, 'i').test(sentence)) continue
+          let s = scoreSentence(sentence, brand.name, kw)
+          s -= otherBrandHits * 2
+          if (!best || s > best.score) best = { sentence, keyword: kw, score: s }
+        }
+      }
+      if (!best) continue
+      const existing = store[brand.id][attribute.id]?.[0]
+      const existingScore = (existing as any)?._score ?? -Infinity
+      if (!existing || best.score > existingScore) {
+        store[brand.id][attribute.id] = [{
+          text: best.sentence,
+          model,
+          prompt: promptText,
+          highlight: best.keyword,
+          // @ts-expect-error internal scoring field, ignored by consumers
+          _score: best.score,
+        }]
       }
     }
   }
