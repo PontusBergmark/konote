@@ -6,6 +6,7 @@ export type ScanExcerpt = {
   model: ScanModel
   prompt: string
   highlight: string
+  score: number
 }
 
 // brandId -> attributeId -> excerpts
@@ -255,15 +256,13 @@ function collectExcerpts(
       }
       if (!best) continue
       const existing = store[brand.id][attribute.id]?.[0]
-      const existingScore = (existing as any)?._score ?? -Infinity
-      if (!existing || best.score > existingScore) {
+      if (!existing || best.score > existing.score) {
         store[brand.id][attribute.id] = [{
           text: best.sentence,
           model,
           prompt: promptText,
           highlight: best.keyword,
-          // @ts-expect-error internal scoring field, ignored by consumers
-          _score: best.score,
+          score: best.score,
         }]
       }
     }
