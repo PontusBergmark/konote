@@ -6,6 +6,7 @@ export type ScanExcerpt = {
   model: ScanModel
   prompt: string
   highlight: string
+  score: number
 }
 
 // brandId -> attributeId -> excerpts
