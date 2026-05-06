@@ -85,6 +85,18 @@ function Logo() {
 /* ---------------- Hero ---------------- */
 
 function Hero() {
+  const navigate = useNavigate();
+  const [brandInput, setBrandInput] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = brandInput.trim();
+    navigate({
+      to: "/app",
+      search: trimmed ? { brand: trimmed } : {},
+    });
+  };
+
   return (
     <section className="border-b border-border">
       <div className="mx-auto max-w-6xl px-6 pt-20 pb-16 md:pt-28 md:pb-24">
@@ -95,18 +107,26 @@ function Hero() {
           <p className="mt-5 max-w-2xl text-base text-muted-foreground md:text-lg">
             See which associations stick, which are missing, and how your positioning holds up inside ChatGPT and Claude.
           </p>
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Link
-              to="/app"
-              className="inline-flex h-11 items-center rounded-md bg-foreground px-5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+          <form onSubmit={handleSubmit} className="mt-8 flex w-full max-w-md items-center gap-2">
+            <input
+              type="text"
+              value={brandInput}
+              onChange={(e) => setBrandInput(e.target.value)}
+              placeholder="Enter your brand name"
+              aria-label="Brand name"
+              className="h-11 flex-1 rounded-md border border-border bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+            <button
+              type="submit"
+              className="inline-flex h-11 items-center rounded-md bg-foreground px-4 text-sm font-medium text-background transition-opacity hover:opacity-90"
             >
-              See it for your brand →
-            </Link>
-            <span className="text-xs text-muted-foreground">
-              Free to try · no card required
-            </span>
-          </div>
-          <p className="mt-5 text-xs text-muted-foreground">
+              Analyze →
+            </button>
+          </form>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Free to try · No card required
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
             Tracks <span className="text-foreground">ChatGPT</span> · <span className="text-foreground">Claude</span>
           </p>
         </div>
@@ -128,6 +148,17 @@ function HeroPreview() {
     score: scores[a.id] ?? 0,
   }));
   const top = [...intended].sort((a, b) => b.score - a.score);
+  const rest = top.slice(1);
+
+  const [revealed, setRevealed] = useState(0);
+
+  useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    rest.forEach((_, i) => {
+      timers.push(setTimeout(() => setRevealed((r) => Math.max(r, i + 1)), 350 + i * 250));
+    });
+    return () => { timers.forEach(clearTimeout); };
+  }, [rest.length]);
 
   return (
     <div className="relative">
@@ -154,19 +185,28 @@ function HeroPreview() {
             </span>
           </div>
           <div className="mt-5 divide-y divide-border">
-            {top.slice(1).map((a, i) => {
+            {rest.map((a, i) => {
               const pct = (a.score / top[0].score) * 100;
+              const isRevealed = i < revealed;
               return (
                 <div key={a.name} className="flex items-center gap-4 py-2.5">
                   <span className="w-4 text-[10px] tabular-nums text-muted-foreground">{i + 2}</span>
                   <span className="w-40 truncate text-sm text-foreground">{a.name}</span>
                   <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-secondary">
                     <div
-                      className="h-full rounded-full"
-                      style={{ width: `${Math.max(pct, 4)}%`, backgroundColor: brand.color }}
+                      className="h-full rounded-full transition-[width] duration-700 ease-out"
+                      style={{
+                        width: isRevealed ? `${Math.max(pct, 4)}%` : "0%",
+                        backgroundColor: brand.color,
+                      }}
                     />
                   </div>
-                  <span className="w-8 text-right text-xs tabular-nums text-muted-foreground">{a.score}</span>
+                  <span
+                    className="w-8 text-right text-xs tabular-nums text-muted-foreground transition-opacity duration-500"
+                    style={{ opacity: isRevealed ? 1 : 0 }}
+                  >
+                    {a.score}
+                  </span>
                 </div>
               );
             })}
