@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { brands } from "../data/brands";
 import { attributes as allAttributes } from "../data/attributes";
 import { currentScores } from "../data/scores";
