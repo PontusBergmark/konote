@@ -1,11 +1,19 @@
 import { useState } from 'react'
-import type { Prompt, PromptType } from '../types'
+import { useServerFn } from '@tanstack/react-start'
+import { toast } from 'sonner'
+import type { Attribute, Brand, Prompt, PromptType } from '../types'
+import { runSensitivityTest } from '../utils/sensitivity.functions'
+import type { SensitivityResult } from '../utils/sensitivity.server'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip'
 
 interface PromptLibraryProps {
   prompts: Prompt[]
   searchQuery: string
   onAdd: (prompt: Prompt) => void
   onRemove: (id: string) => void
+  brands: Brand[]
+  selectedBrand?: Brand
+  attributes: Attribute[]
 }
 
 const TYPE_LABELS: Record<PromptType, { label: string; color: string; bg: string }> = {
