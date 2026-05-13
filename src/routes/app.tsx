@@ -225,6 +225,9 @@ function AppPage() {
               searchQuery={app.searchQuery}
               onAdd={app.addPrompt}
               onRemove={app.removePrompt}
+              brands={app.brands}
+              selectedBrand={app.selectedBrand}
+              attributes={app.attributes}
             />
           )}
           {app.currentView === 'attributes' && (
