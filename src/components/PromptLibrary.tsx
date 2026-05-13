@@ -85,12 +85,89 @@ export function PromptLibrary({ prompts, searchQuery, onAdd, onRemove, brands, s
     setNewText('')
   }
 
+  const deltaSign = sensResult ? (sensResult.delta > 0 ? '+' : sensResult.delta < 0 ? '−' : '') : ''
+  const deltaAbs = sensResult ? Math.abs(sensResult.delta) : 0
+
   return (
     <div className="p-6 max-w-4xl">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-sm font-medium text-foreground">Prompts</h2>
         <span className="text-[11px] text-muted-foreground">{prompts.length} prompts</span>
       </div>
+
+      <TooltipProvider delayDuration={150}>
+        <section className="mb-6 bg-card border border-border rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="text-xs font-semibold text-foreground">Prompt sensitivity test</h3>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-[10px] text-muted-foreground border border-border rounded-full w-4 h-4 inline-flex items-center justify-center cursor-help">?</span>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="max-w-xs text-[11px] leading-relaxed">
+                A high delta suggests this association may be influenced by how the question is asked. Consider whether it reflects genuine brand perception.
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          <p className="text-[11px] text-muted-foreground mb-3">
+            Compare a neutral prompt with a framed prompt across Claude and GPT-4o to see whether an association is intrinsic or prompt-induced.
+          </p>
+
+          <div className="flex flex-wrap items-end gap-2 mb-3">
+            <label className="flex flex-col gap-1">
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Brand</span>
+              <select
+                value={activeBrandId}
+                onChange={e => setSensBrandId(e.target.value)}
+                className="px-2 py-1 text-xs bg-background border border-border rounded-md text-foreground"
+              >
+                {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Attribute</span>
+              <select
+                value={activeAttrId}
+                onChange={e => setSensAttrId(e.target.value)}
+                className="px-2 py-1 text-xs bg-background border border-border rounded-md text-foreground"
+              >
+                {attributes.map(a => <option key={a.id} value={a.id}>{a.name}{a.isIntended ? ' ★' : ''}</option>)}
+              </select>
+            </label>
+            <button
+              onClick={handleRunSensitivity}
+              disabled={sensRunning || !activeBrandId || !activeAttrId}
+              className="px-3 py-1.5 text-xs bg-primary text-primary-foreground rounded-md hover:opacity-90 disabled:opacity-50"
+            >
+              {sensRunning ? 'Running…' : 'Run test'}
+            </button>
+          </div>
+
+          {sensResult && (
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="rounded-md border border-border p-3">
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Neutral prompt</div>
+                <div className="font-mono text-[11px] text-muted-foreground mb-2 truncate" title={sensResult.neutralPrompt}>{sensResult.neutralPrompt}</div>
+                <div className="text-2xl font-semibold text-foreground tabular-nums">{sensResult.neutralScore}</div>
+              </div>
+              <div className="rounded-md border border-border p-3">
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Framed prompt</div>
+                <div className="font-mono text-[11px] text-muted-foreground mb-2 truncate" title={sensResult.framedPrompt}>{sensResult.framedPrompt}</div>
+                <div className="text-2xl font-semibold text-foreground tabular-nums">{sensResult.framedScore}</div>
+              </div>
+              <div className={`rounded-md border p-3 ${sensResult.isPromptSensitive ? 'border-destructive/50 bg-destructive/5' : 'border-border'}`}>
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Delta</div>
+                <div className="text-2xl font-semibold text-foreground tabular-nums mb-1">{deltaSign}{deltaAbs}</div>
+                <div className={`text-[11px] ${sensResult.isPromptSensitive ? 'text-destructive' : 'text-muted-foreground'}`}>
+                  {sensResult.isPromptSensitive ? 'Likely prompt-sensitive' : 'Stable across phrasings'}
+                </div>
+              </div>
+              <div className="sm:col-span-3 text-[11px] text-muted-foreground">
+                Per model — {sensResult.perModel.map(m => `${m.model}: ${m.neutral} → ${m.framed}`).join(' · ')}
+              </div>
+            </div>
+          )}
+        </section>
+      </TooltipProvider>
 
       {(Object.keys(grouped) as PromptType[]).map(type => {
         const items = grouped[type]
