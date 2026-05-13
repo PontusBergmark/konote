@@ -60,7 +60,11 @@ export function PromptLibrary({ prompts, searchQuery, onAdd, onRemove, brands, s
       toast.error('Sensitivity test failed — check API keys and try again')
     } finally {
       setSensRunning(false)
-    }
+  }
+
+  const filtered = prompts.filter(p =>
+    !searchQuery || p.text.toLowerCase().includes(searchQuery.toLowerCase())
+  )
   }
 
   const grouped: Record<PromptType, Prompt[]> = {
