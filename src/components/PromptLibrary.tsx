@@ -22,7 +22,7 @@ const TYPE_LABELS: Record<PromptType, { label: string; color: string; bg: string
   association_probe: { label: 'Brand', color: 'var(--badge-concept-text)', bg: 'var(--badge-concept-bg)' },
 }
 
-export function PromptLibrary({ prompts, searchQuery, onAdd, onRemove }: PromptLibraryProps) {
+export function PromptLibrary({ prompts, searchQuery, onAdd, onRemove, brands, selectedBrand, attributes }: PromptLibraryProps) {
   const [newText, setNewText] = useState('')
   const [newType, setNewType] = useState<PromptType>('category')
   const [collapsed, setCollapsed] = useState<Record<PromptType, boolean>>({
@@ -30,10 +30,38 @@ export function PromptLibrary({ prompts, searchQuery, onAdd, onRemove }: PromptL
     competitor_anchored: false,
     association_probe: false,
   })
+  const sensitivityFn = useServerFn(runSensitivityTest)
+  const intendedAttributes = attributes.filter(a => a.isIntended)
+  const defaultBrandId = selectedBrand?.id ?? brands[0]?.id ?? ''
+  const defaultAttrId = intendedAttributes[0]?.id ?? attributes[0]?.id ?? ''
+  const [sensBrandId, setSensBrandId] = useState<string>(defaultBrandId)
+  const [sensAttrId, setSensAttrId] = useState<string>(defaultAttrId)
+  const [sensRunning, setSensRunning] = useState(false)
+  const [sensResult, setSensResult] = useState<SensitivityResult | null>(null)
 
-  const filtered = prompts.filter(p =>
-    !searchQuery || p.text.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const activeBrandId = sensBrandId || defaultBrandId
+  const activeAttrId = sensAttrId || defaultAttrId
+
+  const handleRunSensitivity = async () => {
+    const brand = brands.find(b => b.id === activeBrandId)
+    const attribute = attributes.find(a => a.id === activeAttrId)
+    if (!brand || !attribute) {
+      toast.error('Pick a brand and an attribute first')
+      return
+    }
+    setSensRunning(true)
+    setSensResult(null)
+    try {
+      const result = await sensitivityFn({ data: { brandName: brand.name, attributeName: attribute.name } })
+      setSensResult(result)
+      toast.success('Sensitivity test complete')
+    } catch (e) {
+      console.error('Sensitivity test failed', e)
+      toast.error('Sensitivity test failed — check API keys and try again')
+    } finally {
+      setSensRunning(false)
+    }
+  }
 
   const grouped: Record<PromptType, Prompt[]> = {
     category: filtered.filter(p => p.type === 'category'),
