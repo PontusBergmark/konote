@@ -425,7 +425,8 @@ export function Overview({
               )
             })}
           </div>
-        )}
+          )
+        })()}
         {intendedResults.some(r => r.status === 'weak' || r.status === 'absent') && (
           <p className="text-[11px] text-muted-foreground mt-2">
             Gaps are signals, not failures. {' '}
