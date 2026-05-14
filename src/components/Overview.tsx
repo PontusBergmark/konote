@@ -355,11 +355,23 @@ export function Overview({
               Set intended attributes →
             </button>
           </div>
-        ) : (
+        ) : (() => {
+          // Coverage rule: only show excerpts if every intended attr with score > 20 has one.
+          // Additional relevance guard: excerpt must mention primary brand AND the highlight keyword.
+          const brandLower = selectedBrand.name.toLowerCase()
+          const isRelevant = (ex: { text: string; highlight: string } | undefined) => {
+            if (!ex) return false
+            const t = ex.text.toLowerCase()
+            return t.includes(brandLower) && (!ex.highlight || t.includes(ex.highlight.toLowerCase()))
+          }
+          const requiring = intendedResults.filter(r => r.current > 20)
+          const allCovered = requiring.length > 0 && requiring.every(r => isRelevant(brandExcerpts[r.attr.id]?.[0]))
+          return (
           <div className="bg-card border border-border rounded-lg divide-y divide-border">
             {intendedResults.map(r => {
               const attrExcerpts = brandExcerpts[r.attr.id] ?? []
-              const example = attrExcerpts[0]
+              const candidate = attrExcerpts[0]
+              const example = allCovered && r.current > 20 && isRelevant(candidate) ? candidate : null
               return (
                 <div key={r.attr.id} className="px-4 py-3">
                   <div className="flex items-center gap-3">
@@ -413,7 +425,8 @@ export function Overview({
               )
             })}
           </div>
-        )}
+          )
+        })()}
         {intendedResults.some(r => r.status === 'weak' || r.status === 'absent') && (
           <p className="text-[11px] text-muted-foreground mt-2">
             Gaps are signals, not failures. {' '}
