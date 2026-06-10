@@ -156,7 +156,7 @@ function AppPage() {
         <ScanProgressBar
           isScanning={isScanning}
           durationMs={activeScanDuration}
-          totalCalls={SCAN_MODES[scanMode].prompts * MODELS_PER_PROMPT}
+          totalCalls={getScanConfig(scanMode).prompts * MODELS_PER_PROMPT}
         />
         <SummaryBar
           selectedBrand={app.selectedBrand}
