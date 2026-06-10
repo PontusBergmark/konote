@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from '@tanstack/react-start'
 import { toast } from 'sonner'
 import { Sidebar } from '../components/Sidebar'
-import { TopBar, SCAN_MODES, MODELS_PER_PROMPT, type ModelFilter, type ScanMode } from '../components/TopBar'
+import { TopBar, SCAN_MODES, MODELS_PER_PROMPT, getScanConfig, type ModelFilter, type ScanMode } from '../components/TopBar'
 import { SummaryBar } from '../components/SummaryBar'
 import { Overview } from '../components/Overview'
 import { AssociationMap } from '../components/AssociationMap'
