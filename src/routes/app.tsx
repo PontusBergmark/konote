@@ -47,7 +47,7 @@ function AppPage() {
   const [scanScores, setScanScores] = useState(currentScores.scores)
   const [scanModelScores, setScanModelScores] = useState<ModelScoreMatrix>({})
   const [scanExcerpts, setScanExcerpts] = useState<import('../utils/scan.server').ScanExcerpts>({})
-  const [scanMode, setScanMode] = useState<ScanMode>('quick')
+  const [scanMode, setScanMode] = useState<ScanMode>(SCAN_MODES.quick.prompts)
   const [selectedModel, setSelectedModel] = useState<ModelFilter>('All')
   const [activeScanDuration, setActiveScanDuration] = useState<number>(SCAN_MODES.quick.durationMs)
   const filteredScores = getScoresForModel(selectedModel, scanScores, scanModelScores, app.brands, app.attributes)
