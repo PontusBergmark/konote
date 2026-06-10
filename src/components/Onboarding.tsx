@@ -70,7 +70,7 @@ export function Onboarding({ onComplete, initialBrandName }: OnboardingProps) {
 
   // Step 4 — Final
   const [selectedModel, setSelectedModel] = useState('All')
-  const [scanMode, setScanMode] = useState<ScanMode>('quick')
+  const [scanMode, setScanMode] = useState<ScanMode>(SCAN_MODES.quick.prompts)
 
   const brandLabel = brandName.trim() || 'your brand'
   const categoryLabel = category.trim() || 'CRM'
