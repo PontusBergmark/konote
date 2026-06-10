@@ -64,8 +64,8 @@ function AppPage() {
       selectedBrandId: string
     }
   ) => {
-    const resolved: ScanMode = mode && SCAN_MODES[mode] ? mode : scanMode
-    const cfg = SCAN_MODES[resolved]
+    const resolved: ScanMode = typeof mode === 'number' ? mode : scanMode
+    const cfg = getScanConfig(resolved)
     const source = scanData ?? app
     setActiveScanDuration(cfg.durationMs)
     setIsScanning(true)
