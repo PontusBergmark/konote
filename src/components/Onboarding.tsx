@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import type { Brand, Prompt, Attribute, PromptType } from '../types'
-import { SCAN_MODES, type ScanMode } from './TopBar'
+import { SCAN_MODES, MIN_PROMPTS, MAX_PROMPTS, getScanConfig, type ScanMode } from './TopBar'
 
 interface OnboardingProps {
   onComplete: (data: { ownBrand: Brand; competitors: Brand[]; prompts: Prompt[]; attributes: Attribute[]; runScan: boolean; scanMode: ScanMode }) => void
@@ -70,7 +70,7 @@ export function Onboarding({ onComplete, initialBrandName }: OnboardingProps) {
 
   // Step 4 — Final
   const [selectedModel, setSelectedModel] = useState('All')
-  const [scanMode, setScanMode] = useState<ScanMode>('quick')
+  const [scanMode, setScanMode] = useState<ScanMode>(SCAN_MODES.quick.prompts)
 
   const brandLabel = brandName.trim() || 'your brand'
   const categoryLabel = category.trim() || 'CRM'
@@ -597,43 +597,47 @@ export function Onboarding({ onComplete, initialBrandName }: OnboardingProps) {
 
             <div>
               <label className="block text-xs text-muted-foreground mb-2">Scan depth</label>
-              <div className="grid grid-cols-2 gap-2">
-                {(Object.keys(SCAN_MODES) as ScanMode[]).map(m => {
-                  const sm = SCAN_MODES[m]
-                  const selected = scanMode === m
-                  const insufficient = allPrompts.length < sm.prompts
-                  return (
-                    <button
-                      key={m}
-                      onClick={() => setScanMode(m)}
-                      className={`px-3 py-2 rounded-md border text-left transition-colors ${
-                        selected ? 'bg-primary/10 border-primary' : 'bg-card border-border hover:border-primary/50'
-                      } ${insufficient ? 'opacity-60' : ''}`}
-                    >
-                      <p className="text-xs font-medium text-foreground">{sm.label}</p>
-                      <p className="text-[10px] text-muted-foreground">{sm.prompts} prompts · ~{sm.seconds} sec</p>
-                      {insufficient && (
-                        <p className="text-[10px] text-destructive mt-0.5">Need {sm.prompts - allPrompts.length} more</p>
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
-              {allPrompts.length < SCAN_MODES[scanMode].prompts && (
-                <p className="text-[11px] text-destructive text-left mt-2">
-                  {SCAN_MODES[scanMode].label} needs {SCAN_MODES[scanMode].prompts} prompts — you have {allPrompts.length}. Go back and add {SCAN_MODES[scanMode].prompts - allPrompts.length} more, or pick Quick scan.
-                </p>
-              )}
+              {(() => {
+                const cfg = getScanConfig(scanMode)
+                const insufficient = allPrompts.length < cfg.prompts
+                return (
+                  <div className="rounded-md border border-border bg-card p-3 text-left">
+                    <div className="flex items-baseline justify-between mb-2">
+                      <p className="text-xs font-medium text-foreground">{cfg.label}</p>
+                      <p className="text-[11px] text-muted-foreground">{cfg.prompts} prompts · ~{cfg.seconds} sec</p>
+                    </div>
+                    <input
+                      type="range"
+                      min={MIN_PROMPTS}
+                      max={MAX_PROMPTS}
+                      step={1}
+                      value={cfg.prompts}
+                      onChange={(e) => setScanMode(Number(e.target.value))}
+                      className="w-full accent-primary"
+                      aria-label="Number of prompts per scan"
+                    />
+                    <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+                      <span>{MIN_PROMPTS} (Quick)</span>
+                      <span>{MAX_PROMPTS} (Full)</span>
+                    </div>
+                    {insufficient && (
+                      <p className="text-[11px] text-destructive mt-2">
+                        Need {cfg.prompts - allPrompts.length} more prompt{cfg.prompts - allPrompts.length === 1 ? '' : 's'} — you have {allPrompts.length}. Lower the slider or go back and add more.
+                      </p>
+                    )}
+                  </div>
+                )
+              })()}
             </div>
 
             <div className="space-y-2">
               <button
                 onClick={() => buildData(true)}
-                disabled={allPrompts.length < SCAN_MODES[scanMode].prompts}
+                disabled={allPrompts.length < getScanConfig(scanMode).prompts}
                 className="w-full px-6 py-3 text-sm font-semibold text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{ backgroundColor: '#6C3EF4' }}
               >
-                Run {SCAN_MODES[scanMode].label.toLowerCase()} ↗
+                Run {getScanConfig(scanMode).label.toLowerCase()} ↗
               </button>
               <button
                 onClick={() => buildData(false)}

@@ -18,7 +18,7 @@ export function useAppState() {
   const selectedBrand = brands.find(b => b.id === selectedBrandId) ?? brands[0]
   const showOnboarding = !onboardingDone && promptsList.length === 0
 
-  const completeOnboarding = useCallback((data: { ownBrand: Brand; competitors: Brand[]; prompts: Prompt[]; attributes?: Attribute[]; runScan?: boolean; scanMode?: 'quick' | 'full' }) => {
+  const completeOnboarding = useCallback((data: { ownBrand: Brand; competitors: Brand[]; prompts: Prompt[]; attributes?: Attribute[]; runScan?: boolean; scanMode?: number }) => {
     setBrands([data.ownBrand, ...data.competitors])
     setSelectedBrandId(data.ownBrand.id)
     setPromptsList(data.prompts)
@@ -26,7 +26,7 @@ export function useAppState() {
       setAttributes(data.attributes)
     }
     setOnboardingDone(true)
-    return { runScan: data.runScan ?? false, scanMode: data.scanMode ?? 'quick' as const }
+    return { runScan: data.runScan ?? false, scanMode: data.scanMode ?? 9 }
   }, [])
 
   const resetToOnboarding = useCallback(() => {

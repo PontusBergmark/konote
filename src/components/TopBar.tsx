@@ -1,14 +1,25 @@
 import { useState } from 'react'
 import type { Brand, ScanModel } from '../types'
 
-export type ScanMode = 'quick' | 'full'
+// ScanMode is the number of prompts to run (9-15)
+export type ScanMode = number
 
 export const MODELS_PER_PROMPT = 2
+export const MIN_PROMPTS = 9
+export const MAX_PROMPTS = 15
 export type ModelFilter = 'All' | ScanModel
 
-export const SCAN_MODES: Record<ScanMode, { label: string; prompts: number; seconds: number; durationMs: number }> = {
-  quick: { label: 'Quick scan', prompts: 9, seconds: 60, durationMs: 60000 },
-  full: { label: 'Full scan', prompts: 15, seconds: 100, durationMs: 100000 },
+export function getScanConfig(count: number): { label: string; prompts: number; seconds: number; durationMs: number } {
+  const prompts = Math.min(MAX_PROMPTS, Math.max(MIN_PROMPTS, Math.round(count)))
+  const seconds = Math.round(prompts * (100 / 15))
+  const label = prompts === MIN_PROMPTS ? 'Quick scan' : prompts === MAX_PROMPTS ? 'Full scan' : `Custom scan`
+  return { label, prompts, seconds, durationMs: seconds * 1000 }
+}
+
+// Back-compat: SCAN_MODES still exported as the two named presets
+export const SCAN_MODES = {
+  quick: getScanConfig(MIN_PROMPTS),
+  full: getScanConfig(MAX_PROMPTS),
 }
 
 interface TopBarProps {
@@ -33,7 +44,7 @@ const MODEL_OPTIONS: Array<{ value: ModelFilter; label: string }> = [
 export function TopBar({ brands, selectedBrand, onBrandChange, onExport, onRunScan, isScanning, scanMode, onScanModeChange, selectedModel, onModelChange }: TopBarProps) {
   const [open, setOpen] = useState(false)
   const [scanMenuOpen, setScanMenuOpen] = useState(false)
-  const mode = SCAN_MODES[scanMode]
+  const mode = getScanConfig(scanMode)
   const selectedModelLabel = MODEL_OPTIONS.find(option => option.value === selectedModel)?.label ?? 'All models'
 
   return (
@@ -107,26 +118,26 @@ export function TopBar({ brands, selectedBrand, onBrandChange, onExport, onRunSc
             </svg>
           </button>
           {scanMenuOpen && (
-            <div className="absolute top-full right-0 mt-1 bg-popover border border-border rounded-md shadow-md z-50 min-w-[260px] py-1">
-              {(Object.keys(SCAN_MODES) as ScanMode[]).map(m => {
-                const sm = SCAN_MODES[m]
-                const selected = m === scanMode
-                return (
-                  <button
-                    key={m}
-                    onClick={() => { onScanModeChange(m); setScanMenuOpen(false) }}
-                    className={`w-full flex items-start gap-2 px-3 py-2 text-left hover:bg-accent ${selected ? 'bg-accent' : ''}`}
-                  >
-                    <span className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${selected ? 'bg-primary' : 'bg-muted-foreground/30'}`} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-foreground">{sm.label}</p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {sm.prompts} prompts × {MODELS_PER_PROMPT} models · ~{Math.ceil(sm.seconds / 60)} min
-                      </p>
-                    </div>
-                  </button>
-                )
-              })}
+            <div className="absolute top-full right-0 mt-1 bg-popover border border-border rounded-md shadow-md z-50 w-[280px] p-3">
+              <p className="text-xs font-medium text-foreground mb-1">Prompts per scan</p>
+              <p className="text-[11px] text-muted-foreground mb-3">
+                {mode.prompts} prompts × {MODELS_PER_PROMPT} models · ~{Math.max(1, Math.ceil(mode.seconds / 60))} min
+              </p>
+              <input
+                type="range"
+                min={MIN_PROMPTS}
+                max={MAX_PROMPTS}
+                step={1}
+                value={mode.prompts}
+                onChange={(e) => onScanModeChange(Number(e.target.value))}
+                className="w-full accent-primary"
+                aria-label="Number of prompts per scan"
+              />
+              <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+                <span>{MIN_PROMPTS} (Quick)</span>
+                <span className="font-medium text-foreground">{mode.prompts}</span>
+                <span>{MAX_PROMPTS} (Full)</span>
+              </div>
             </div>
           )}
         </div>

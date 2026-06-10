@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from '@tanstack/react-start'
 import { toast } from 'sonner'
 import { Sidebar } from '../components/Sidebar'
-import { TopBar, SCAN_MODES, MODELS_PER_PROMPT, type ModelFilter, type ScanMode } from '../components/TopBar'
+import { TopBar, SCAN_MODES, MODELS_PER_PROMPT, getScanConfig, type ModelFilter, type ScanMode } from '../components/TopBar'
 import { SummaryBar } from '../components/SummaryBar'
 import { Overview } from '../components/Overview'
 import { AssociationMap } from '../components/AssociationMap'
@@ -47,7 +47,7 @@ function AppPage() {
   const [scanScores, setScanScores] = useState(currentScores.scores)
   const [scanModelScores, setScanModelScores] = useState<ModelScoreMatrix>({})
   const [scanExcerpts, setScanExcerpts] = useState<import('../utils/scan.server').ScanExcerpts>({})
-  const [scanMode, setScanMode] = useState<ScanMode>('quick')
+  const [scanMode, setScanMode] = useState<ScanMode>(SCAN_MODES.quick.prompts)
   const [selectedModel, setSelectedModel] = useState<ModelFilter>('All')
   const [activeScanDuration, setActiveScanDuration] = useState<number>(SCAN_MODES.quick.durationMs)
   const filteredScores = getScoresForModel(selectedModel, scanScores, scanModelScores, app.brands, app.attributes)
@@ -64,8 +64,8 @@ function AppPage() {
       selectedBrandId: string
     }
   ) => {
-    const resolved: ScanMode = mode && SCAN_MODES[mode] ? mode : scanMode
-    const cfg = SCAN_MODES[resolved]
+    const resolved: ScanMode = typeof mode === 'number' ? mode : scanMode
+    const cfg = getScanConfig(resolved)
     const source = scanData ?? app
     setActiveScanDuration(cfg.durationMs)
     setIsScanning(true)
@@ -83,7 +83,7 @@ function AppPage() {
       setScanExcerpts(result.excerpts ?? {})
       setIsScanning(false)
       setLastScannedAt(new Date())
-      const promptCount = SCAN_MODES[resolved].prompts
+      const promptCount = cfg.prompts
       toast.success(`Scan complete — ${promptCount} prompts across 2 models`)
     } catch (error) {
       console.error('Live scan failed', error)
@@ -156,7 +156,7 @@ function AppPage() {
         <ScanProgressBar
           isScanning={isScanning}
           durationMs={activeScanDuration}
-          totalCalls={SCAN_MODES[scanMode].prompts * MODELS_PER_PROMPT}
+          totalCalls={getScanConfig(scanMode).prompts * MODELS_PER_PROMPT}
         />
         <SummaryBar
           selectedBrand={app.selectedBrand}
