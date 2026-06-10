@@ -83,7 +83,7 @@ function AppPage() {
       setScanExcerpts(result.excerpts ?? {})
       setIsScanning(false)
       setLastScannedAt(new Date())
-      const promptCount = SCAN_MODES[resolved].prompts
+      const promptCount = cfg.prompts
       toast.success(`Scan complete — ${promptCount} prompts across 2 models`)
     } catch (error) {
       console.error('Live scan failed', error)
