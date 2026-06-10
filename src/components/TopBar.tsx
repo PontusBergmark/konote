@@ -1,14 +1,25 @@
 import { useState } from 'react'
 import type { Brand, ScanModel } from '../types'
 
-export type ScanMode = 'quick' | 'full'
+// ScanMode is the number of prompts to run (9-15)
+export type ScanMode = number
 
 export const MODELS_PER_PROMPT = 2
+export const MIN_PROMPTS = 9
+export const MAX_PROMPTS = 15
 export type ModelFilter = 'All' | ScanModel
 
-export const SCAN_MODES: Record<ScanMode, { label: string; prompts: number; seconds: number; durationMs: number }> = {
-  quick: { label: 'Quick scan', prompts: 9, seconds: 60, durationMs: 60000 },
-  full: { label: 'Full scan', prompts: 15, seconds: 100, durationMs: 100000 },
+export function getScanConfig(count: number): { label: string; prompts: number; seconds: number; durationMs: number } {
+  const prompts = Math.min(MAX_PROMPTS, Math.max(MIN_PROMPTS, Math.round(count)))
+  const seconds = Math.round(prompts * (100 / 15))
+  const label = prompts === MIN_PROMPTS ? 'Quick scan' : prompts === MAX_PROMPTS ? 'Full scan' : `Custom scan`
+  return { label, prompts, seconds, durationMs: seconds * 1000 }
+}
+
+// Back-compat: SCAN_MODES still exported as the two named presets
+export const SCAN_MODES = {
+  quick: getScanConfig(MIN_PROMPTS),
+  full: getScanConfig(MAX_PROMPTS),
 }
 
 interface TopBarProps {
