@@ -44,7 +44,7 @@ const MODEL_OPTIONS: Array<{ value: ModelFilter; label: string }> = [
 export function TopBar({ brands, selectedBrand, onBrandChange, onExport, onRunScan, isScanning, scanMode, onScanModeChange, selectedModel, onModelChange }: TopBarProps) {
   const [open, setOpen] = useState(false)
   const [scanMenuOpen, setScanMenuOpen] = useState(false)
-  const mode = SCAN_MODES[scanMode]
+  const mode = getScanConfig(scanMode)
   const selectedModelLabel = MODEL_OPTIONS.find(option => option.value === selectedModel)?.label ?? 'All models'
 
   return (
