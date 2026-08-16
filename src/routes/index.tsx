@@ -61,6 +61,7 @@ function SiteHeader() {
         </nav>
         <Link
           to="/app"
+          search={{ brand: undefined }}
           className="inline-flex h-8 items-center rounded-md bg-foreground px-3 text-xs font-medium text-background transition-opacity hover:opacity-90"
         >
           See it for your brand →
@@ -93,7 +94,7 @@ function Hero() {
     const trimmed = brandInput.trim();
     navigate({
       to: "/app",
-      search: trimmed ? { brand: trimmed } : {},
+      search: { brand: trimmed || undefined },
     });
   };
 
@@ -421,6 +422,7 @@ function ProductDemo() {
 
               <Link
                 to="/app"
+                search={{ brand: undefined }}
                 className="mt-6 inline-flex text-xs font-medium text-primary hover:underline"
               >
                 Open the full app →
@@ -661,6 +663,7 @@ function FinalCTA() {
         <p className="mt-5 text-lg text-muted-foreground">Now you can see it.</p>
         <Link
           to="/app"
+          search={{ brand: undefined }}
           className="mt-8 inline-flex h-12 items-center rounded-md bg-foreground px-6 text-sm font-medium text-background transition-opacity hover:opacity-90"
         >
           See it for your brand →
